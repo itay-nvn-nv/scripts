@@ -1,19 +1,13 @@
-# ArgoCD automation script
-**saves kubeconfig locally and sets it as default using env var.**
+# ArgoCD env-in-a-click tool
+lists all apps under **customer-success** project for you to choose.
+once an app is chosen, you can: start, hibernate, get kubeconfig, show app info
 
 allow script to execute:
 ```
-chmod +x run.sh
+chmod +x argocd.sh
 ```
 
-then run with the name of the ArgoCD app:
+then run:
 ```
-bash run.sh my-cluster
-```
-
-example output:
-```
-Checking app my-cluster:
-app my-cluster is healthy!
-kubeconfig file saved at: /Users/johndoe/my-cluster_kubeconfig.yaml
+bash argocd.sh
 ```
