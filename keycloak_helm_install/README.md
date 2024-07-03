@@ -11,3 +11,8 @@ helm install keycloak bitnami/keycloak \
 --create-namespace -n keycloak \
 -f values.yaml --debug \
 ```
+
+Run initialization script to create realm and entities:
+```
+bash initialization.sh
+```
