@@ -16,3 +16,9 @@ Run initialization script to create realm and entities:
 ```
 bash initialization.sh
 ```
+
+OPTIONAL: Upgrade chart:
+```
+helm upgrade keycloak bitnami/keycloak \
+ -n keycloak -f values.yaml --debug
+```
