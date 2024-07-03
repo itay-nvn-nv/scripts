@@ -1,3 +1,11 @@
+httpRelativePath: /keycloak
+
 auth:
   adminUser: admin
   adminPassword: admin
+
+ingress:
+  enabled: true
+  pathType: Prefix
+  hostname: itay-saas.runailabs-cs.com
+  servicePort: http
