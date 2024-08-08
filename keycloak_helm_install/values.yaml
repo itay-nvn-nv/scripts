@@ -1,11 +1,33 @@
-httpRelativePath: /keycloak
-
 auth:
-  adminUser: admin
-  adminPassword: admin
+  adminUser: root
+  adminPassword: root
+
+# httpRelativePath: /itay-keycloak/
 
 ingress:
   enabled: true
-  pathType: Prefix
-  hostname: itay-saas.runailabs-cs.com
-  servicePort: http
+  hostname: itay-keycloak-test.runailabs-cs.com
+  hostnameStrict: true
+  ingressClassName: nginx
+  tls: true
+  extraTls:
+  - hosts:
+    - itay-keycloak-test.runailabs-cs.com
+    secretName: runai-backend-tls
+
+logging:
+  level: DEBUG
+
+# kubectl -n runai-backend get secret runai-backend-tls -o yaml > secret_old.yaml;
+
+# yq eval '
+#   .metadata.namespace = "keycloak" |
+#   del(.metadata.creationTimestamp) |
+#   del(.metadata.resourceVersion) |
+#   del(.metadata.selfLink) |
+#   del(.metadata.uid)
+# ' secret_old.yaml > secret_new.yaml;
+
+# kubectl apply -f secret_new.yaml;
+
+# rm -rf secret_old.yaml secret_new.yaml;
