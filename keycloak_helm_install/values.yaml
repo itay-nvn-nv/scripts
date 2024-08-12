@@ -2,32 +2,59 @@ auth:
   adminUser: root
   adminPassword: root
 
-# httpRelativePath: /itay-keycloak/
-
+### to serve on existing domains subpath: https://sh-213.runailabs-cs.com/itay-keycloak/
+httpRelativePath: /itay-keycloak/
 ingress:
   enabled: true
-  hostname: itay-keycloak-test.runailabs-cs.com
+  hostname: sh-213.runailabs-cs.com
   hostnameStrict: true
+  pathType: Prefix
   ingressClassName: nginx
   tls: true
   extraTls:
   - hosts:
-    - itay-keycloak-test.runailabs-cs.com
+    - sh-213.runailabs-cs.com
     secretName: runai-backend-tls
+
+### to serve on a separate domain: https://itay-keycloak-test.runailabs-cs.com/
+# ingress:
+#   enabled: true
+#   hostname: itay-keycloak-test.runailabs-cs.com
+#   hostnameStrict: true
+#   ingressClassName: nginx
+#   tls: true
+#   extraTls:
+#   - hosts:
+#     - itay-keycloak-test.runailabs-cs.com
+#     secretName: runai-backend-tls
 
 logging:
   level: DEBUG
 
-# kubectl -n runai-backend get secret runai-backend-tls -o yaml > secret_old.yaml;
-
-# yq eval '
-#   .metadata.namespace = "keycloak" |
-#   del(.metadata.creationTimestamp) |
-#   del(.metadata.resourceVersion) |
-#   del(.metadata.selfLink) |
-#   del(.metadata.uid)
-# ' secret_old.yaml > secret_new.yaml;
-
-# kubectl apply -f secret_new.yaml;
-
-# rm -rf secret_old.yaml secret_new.yaml;
+### themes
+initContainers:
+- name: themes
+  image: nginx
+  command:
+  - /bin/sh
+  - -c
+  - |
+    apt-get update && apt-get install -y zip
+    cd /tmp/ && pwd
+    curl -L -o ./master.zip https://github.com/genny-project/keycloak-themes/archive/refs/heads/master.zip
+    unzip ./master.zip
+    cd ./keycloak-themes-master/themes
+    rm -rf ./base/  ./keycloak/  ./keycloak-preview/
+    mv ./* /keycloak/themes/
+    cd /keycloak/themes/ && pwd
+    ls -la
+    rm -rf /tmp/master.zip && rm -rf /tmp/keycloak-themes-master/
+  volumeMounts:
+  - name: themes
+    mountPath: /keycloak/themes
+extraVolumeMounts:
+- name: themes
+  mountPath: /opt/bitnami/keycloak/themes
+extraVolumes:
+- name: themes
+  emptyDir: {}

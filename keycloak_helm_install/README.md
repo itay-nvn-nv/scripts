@@ -7,6 +7,11 @@ helm repo add bitnami https://charts.bitnami.com/bitnami
 helm repo update
 ```
 
+### Modify values
+In the `values.yaml` file there are 2 `ingress` sections. Make sure you comment/uncomment them according to the URL convention you wish keycloak to be served on (seperate domain i.e. https://my-keycloak.com or a subpath on existing domain i.e https://my-webapp.com/keycloak).
+Note that you have to provide the name of the TLS secret (within the keeycloak namespace) for the domain.
+You can leave the rest as is.
+
 ### Install chart
 ```
 helm install keycloak bitnami/keycloak \
@@ -14,34 +19,29 @@ helm install keycloak bitnami/keycloak \
 -f values.yaml --debug
 ```
 
-### Create example entities
-Run the script to create a realm, OIDC client and an example user:
+wait until keycloak pods are running:
 ```bash
-CONTROL_PLANE_URL="https://my-webapp.com" \
-KEYCLOAK_ADMIN="root" \
-KEYCLOAK_ADMIN_PASSWORD="root" \
-KEYCLOAK_URL="https://my-keycloak.com" \
-KEYCLOAK_REALM="mytestingrealm" \
-USER_FIRST_NAME="Will" \
-USER_LAST_NAME="Smith" \
-USER_EMAIL="will@gettin-jiggy.io" \
-USER_USERNAME="willsmith79" \
-USER_PASSWORD="123456" \
-KEYCLOAK_CLIENT="myclient" \
-bash create_client.sh
+kubectl -n keycloak get pods
 ```
 
-Modify values according to this table:
-| Environment variable | Description | Example |
+### Create example entities
+Modify the values in `config.env` file, according to this table:
+| Environment variable | Description | Default value |
 |--|--|--|
-| `CONTROL_PLANE_URL` | The URL of the control plane. | https://my-webapp.com |
+| `WEB_APP_URL` | The URL of the web app you wish to integrate SSO with. | https://my-webapp.com |
 | `KEYCLOAK_ADMIN` | Keycloak admin username | root |
 | `KEYCLOAK_ADMIN_PASSWORD` | Keycloak admin password | root |
-| `KEYCLOAK_URL` | Keycloak URL (hostname), where its expected to be accessed | https://my-keycloak.com |
+| `KEYCLOAK_URL` | Keycloak URL (hostname), where its expected to be accessed | separate domain: https://my-keycloak.com OR subpath: https://my-webapp.com/keycloak |
 | `KEYCLOAK_REALM` | The name of the new realm you want to create. | mytestingrealm |
-| `KEYCLOAK_CLIENT` | The name of the new OIDC client you want to create. | myclient |
+| `KEYCLOAK_CLIENT_ID` | Client ID | myclient |
+| `KEYCLOAK_CLIENT_TYPE` | Type of client (oidc/saml) | oidc |
 | `USER_FIRST_NAME` | The example user's first name | Will |
 | `USER_LAST_NAME` | The example user's last name | Smith |
 | `USER_EMAIL` | The example user's email address | will@gettin-jiggy.io |
 | `USER_USERNAME` | The example user's username | willsmith79 |
 | `USER_PASSWORD` | The example user's initial password (you can require the user to reset it upon login). | 123456 |
+
+Run the script to create a realm, OIDC client and an example user:
+```bash
+bash create_client.sh
+```
