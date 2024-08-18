@@ -8,8 +8,13 @@ helm repo update
 ```
 
 ### Modify values
-In the `values.yaml` file there are 2 `ingress` sections. Make sure you comment/uncomment them according to the URL convention you wish keycloak to be served on (seperate domain i.e. https://my-keycloak.com or a subpath on existing domain i.e https://my-webapp.com/keycloak).
-Note that you have to provide the name of the TLS secret (within the keeycloak namespace) for the domain.
+In the `values.yaml` file there are 2 `ingress` sections, make sure you comment/uncomment them according to the URL convention you wish keycloak to be served on:
+| type | example |
+|---|---|
+| seperate domain | https://my-keycloak.com  |
+| subpath on existing domain | https://my-webapp.com/keycloak |
+
+Provide the name of the TLS secret (within the keycloak namespace) for the domain.\
 You can leave the rest as is.
 
 ### Install chart
