@@ -10,7 +10,7 @@ echo "Downloading binaries for $DIST"
 ### runai CLI ###
 
 if kubectl get ns runai > /dev/null 2>&1; then
-    RUNAI_CLUSTER_URL=$(kubectl -n runai get ingress researcher-service-ingress -o jsonpath='{.spec.rules[0].host}')
+    RUNAI_CLUSTER_URL=$(kubectl -n runai get deploy cluster-sync -o jsonpath='{.spec.template.spec.containers[0].env[?(@.name=="CLUSTER_DOMAIN")].value}')
     echo "Run:AI cluster URL: $RUNAI_CLUSTER_URL"
     RUNAI_CLUSTER_VERSION=$(kubectl -n runai get deploy -o wide | tail -n 1 | awk '{ print $7 }' | awk -F: '{print $2}')
     echo "Run:AI cluster version: $RUNAI_CLUSTER_VERSION"
@@ -26,9 +26,9 @@ fi
 ### runai-adm CLI ###
 
 if kubectl get ns runai-backend > /dev/null 2>&1; then
-    RUNAI_CTRL_PLANE_URL=$(kubectl -n runai-backend get ingress runai-backend-ingress -o jsonpath='{.spec.rules[0].host}')
+    RUNAI_CTRL_PLANE_URL=$(kubectl -n runai-backend get configmap runai-backend-identity-manager -o jsonpath="{.data.APP_URL}")
     echo "Run:AI control plane URL: $RUNAI_CTRL_PLANE_URL"
-    RUNAI_CTRL_PLANE_VERSION=$(kubectl -n runai-backend get deploy -o wide | tail -n 1 | awk '{ print $7 }' | awk -F: '{print $2}' | tr -d '.')
+    RUNAI_CTRL_PLANE_VERSION=$(kubectl -n runai-backend get deploy -o wide | tail -n 1 | awk '{ print $7 }' | awk -F: '{print $2}')
     echo "Run:AI control plane version: $RUNAI_CTRL_PLANE_VERSION"
     ADMIN_CLI_BINARY_PATH="$HOME/runai-adm-$(echo $RUNAI_CTRL_PLANE_VERSION | tr -d '.')"
     wget --quiet https://$RUNAI_CTRL_PLANE_URL/v1/k8s/admin-cli/$DIST -O $ADMIN_CLI_BINARY_PATH
