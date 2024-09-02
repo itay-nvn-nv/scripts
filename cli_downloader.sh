@@ -1,17 +1,17 @@
-# define details
-RUNAI_URL=$(kubectl -n runai get ingress researcher-service-ingress -o jsonpath='{.spec.rules[0].host}')
-RUNAI_VERSION=$(kubectl -n runai get deploy cluster-sync -o jsonpath='{.spec.template.spec.containers[?(@.name=="cluster-sync")].env[?(@.name=="CLUSTER_VERSION")].value}')
-RUNAI_VERSION_CLEAN=$(echo "$RUNAI_VERSION" | tr -d '.')
-CLI_BINARY_NAME="runai-$RUNAI_VERSION_CLEAN"
-
-# download binary
-wget --content-disposition https://$RUNAI_URL/cli/darwin -O $CLI_BINARY_NAME
-
-# allow execution
+### runai CLI ###
+RUNAI_CLUSTER_URL=$(kubectl -n runai get ingress researcher-service-ingress -o jsonpath='{.spec.rules[0].host}')
+RUNAI_CLUSTER_VERSION=$(kubectl -n runai get deploy -o wide | tail -n 1 | awk '{ print $7 }' | awk -F: '{print $2}' | tr -d '.')
+CLI_BINARY_NAME="runai-$RUNAI_CLUSTER_VERSION"
+wget --content-disposition https://$RUNAI_CLUSTER_URL/cli/darwin -O $CLI_BINARY_NAME
 chmod +x $CLI_BINARY_NAME
-
-# create alias "r" (to keep "runai" alias free)
 alias r="./$CLI_BINARY_NAME"
-
-# check cli version
 r version
+
+### runai-adm CLI ###
+RUNAI_CTRL_PLANE_URL=$(kubectl -n runai-backend get ingress runai-backend-ingress -o jsonpath='{.spec.rules[0].host}')
+RUNAI_CTRL_PLANE_VERSION=$(kubectl -n runai-backend get deploy -o wide | tail -n 1 | awk '{ print $7 }' | awk -F: '{print $2}' | tr -d '.')
+ADMIN_CLI_BINARY_NAME="runai-adm-$RUNAI_CTRL_PLANE_VERSION"
+wget --content-disposition https://$RUNAI_CTRL_PLANE_URL/cli/darwin -O $ADMIN_CLI_BINARY_NAME
+chmod +x $ADMIN_CLI_BINARY_NAME
+alias ra="./$ADMIN_CLI_BINARY_NAME"
+ra version
