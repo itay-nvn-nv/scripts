@@ -14,7 +14,7 @@ if kubectl get ns runai > /dev/null 2>&1; then
     echo "Run:AI cluster URL: $RUNAI_CLUSTER_URL"
     RUNAI_CLUSTER_VERSION=$(kubectl -n runai get deploy -o wide | tail -n 1 | awk '{ print $7 }' | awk -F: '{print $2}')
     echo "Run:AI cluster version: $RUNAI_CLUSTER_VERSION"
-    CLI_BINARY_PATH="$HOME/Downloads/runai-$(echo $RUNAI_CLUSTER_VERSION | tr -d '.')"
+    CLI_BINARY_PATH="$HOME/runai-$(echo $RUNAI_CLUSTER_VERSION | tr -d '.')"
     wget --quiet --content-disposition https://$RUNAI_CLUSTER_URL/cli/$DIST -O $CLI_BINARY_PATH
     chmod +x $CLI_BINARY_PATH
     echo "CLI binary saved to '$CLI_BINARY_PATH', assign it to the 'r' alias by running:"
