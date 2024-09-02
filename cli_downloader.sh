@@ -11,7 +11,7 @@ r version
 RUNAI_CTRL_PLANE_URL=$(kubectl -n runai-backend get ingress runai-backend-ingress -o jsonpath='{.spec.rules[0].host}')
 RUNAI_CTRL_PLANE_VERSION=$(kubectl -n runai-backend get deploy -o wide | tail -n 1 | awk '{ print $7 }' | awk -F: '{print $2}' | tr -d '.')
 ADMIN_CLI_BINARY_NAME="runai-adm-$RUNAI_CTRL_PLANE_VERSION"
-wget --content-disposition https://$RUNAI_CTRL_PLANE_URL/cli/darwin -O $ADMIN_CLI_BINARY_NAME
+wget --content-disposition https://$RUNAI_CTRL_PLANE_URL/v1/k8s/admin-cli/darwin -O $ADMIN_CLI_BINARY_NAME
 chmod +x $ADMIN_CLI_BINARY_NAME
 alias ra="./$ADMIN_CLI_BINARY_NAME"
 ra version
