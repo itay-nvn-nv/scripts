@@ -16,6 +16,7 @@ env_vars=(
     "USER_EMAIL"
     "USER_USERNAME"
     "USER_PASSWORD"
+    "CREATE_CUSTOM_MAPPERS"
 )
 
 # Check vars are populated
@@ -29,6 +30,8 @@ for var in "${env_vars[@]}"; do
   fi
 done
 
+KEYCLOAK_CLIENT_SCOPE_NAME="$KEYCLOAK_CLIENT_ID-dedicated"
+
 # Get an admin-scoped access token
 get_access_token() {
   ACCESS_TOKEN=$(curl -s -X POST "$KEYCLOAK_URL/realms/master/protocol/openid-connect/token" \
@@ -36,7 +39,7 @@ get_access_token() {
     -d "username=$KEYCLOAK_ADMIN" \
     -d "password=$KEYCLOAK_ADMIN_PASSWORD" \
     -d 'grant_type=password' \
-    -d 'KEYCLOAK_CLIENT=admin-cli' | jq -r '.access_token')
+    -d 'client_id=admin-cli' | jq -r '.access_token')
   echo $ACCESS_TOKEN
 }
 
@@ -93,7 +96,7 @@ create_oidc_client() {
   echo "=> OIDC client secret: '$CLIENT_SECRET'"
 }
 
-# Create a SAML client
+# Create a SAML client (inactive, dont use)
 create_saml_client() {
   echo "##### Creating SAML client '$KEYCLOAK_CLIENT_ID'..."
   curl --location -s -X POST "$KEYCLOAK_URL/admin/realms/$KEYCLOAK_REALM/clients" \
@@ -130,6 +133,36 @@ create_saml_client() {
   echo "=> SAML 2.0 endpoint URL: '$SAML_ENDPOINT'"
 }
 
+# Create custom mappers
+create_mapper() {
+  local MAPPER_NAME="$1"
+  local TOKEN_CLAIM_NAME="$2"
+  local CLAIM_VALUE="$3"
+  local CLAIM_JSON_TYPE="$4"
+
+  curl -s -X POST \
+    -H "Content-Type: application/json" \
+    -H "Authorization: Bearer $NEW_TOKEN" \
+    -d '{
+      "name": "'"$MAPPER_NAME"'",
+      "protocol": "openid-connect",
+      "protocolMapper": "oidc-hardcoded-claim-mapper",
+      "config": {
+        "claim.name": "'"$TOKEN_CLAIM_NAME"'",
+        "claim.value": "'"$CLAIM_VALUE"'",
+        "jsonType.label": "'"$CLAIM_JSON_TYPE"'",
+        "id.token.claim": "true",
+        "access.token.claim": "true",
+        "lightweight.claim": "false",
+        "userinfo.token.claim": "true",
+        "access.tokenResponse.claim": "false",
+        "introspection.token.claim": "true"
+      }
+    }' \
+    "$KEYCLOAK_URL/admin/realms/$KEYCLOAK_REALM/clients/$CLIENT_UUID/protocol-mappers/models"
+  echo "Mapper '$MAPPER_NAME' added to client scope '$KEYCLOAK_CLIENT_SCOPE_NAME'."
+}
+
 # start:
 NEW_TOKEN=$(get_access_token)
 create_realm
@@ -144,4 +177,13 @@ else
     create_oidc_client
 fi
 
-echo "##### post install script finished :)"
+if [ "$CREATE_CUSTOM_MAPPERS" = "true" ]; then
+  echo "CREATE_CUSTOM_MAPPERS is set to true, creating mappers..."
+    create_mapper "UID" "UID" "123" "String"
+    create_mapper "GID" "GID" "456" "String" 
+    create_mapper "SUPPLEMENTARYGROUPS" "SUPPLEMENTARYGROUPS" "[123,342]" "JSON"
+else
+  echo "CREATE_CUSTOM_MAPPERS is not set to true, skipping."
+fi
+
+echo "#### post install script finished :)"

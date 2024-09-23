@@ -45,6 +45,7 @@ Modify the values in `config.env` file, according to this table:
 | `USER_EMAIL` | The example user's email address | will@gettin-jiggy.io |
 | `USER_USERNAME` | The example user's username | willsmith79 |
 | `USER_PASSWORD` | The example user's initial password (you can require the user to reset it upon login). | 123456 |
+| `CREATE_CUSTOM_MAPPERS` | Create custom mappers for the clients dedicated scope | false |
 
 Run the script to create a realm, OIDC client and an example user:
 ```bash
