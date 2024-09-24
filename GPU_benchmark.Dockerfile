@@ -1,3 +1,5 @@
+# https://medium.com/@gauravvij/want-to-benchmark-your-gpus-for-deep-learning-3266d7703f7f
+#
 # https://catalog.ngc.nvidia.com/orgs/nvidia/containers/cuda/tags
 FROM nvcr.io/nvidia/cuda:12.6.1-base-ubuntu24.04
 RUN git clone https://github.com/linux-rdma/perftest && \
