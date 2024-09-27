@@ -2,31 +2,31 @@ auth:
   adminUser: root
   adminPassword: root
 
-### to serve on existing domains subpath: https://sh-213.runailabs-cs.com/itay-keycloak/
-httpRelativePath: /itay-keycloak/
-ingress:
-  enabled: true
-  hostname: sh-213.runailabs-cs.com
-  hostnameStrict: true
-  pathType: Prefix
-  ingressClassName: nginx
-  tls: true
-  extraTls:
-  - hosts:
-    - sh-213.runailabs-cs.com
-    secretName: runai-backend-tls
-
-### to serve on a separate domain: https://itay-keycloak-test.runailabs-cs.com/
+# ### to serve on existing domains subpath: https://sh-213.runailabs-cs.com/itay-keycloak/
+# httpRelativePath: /itay-keycloak/
 # ingress:
 #   enabled: true
-#   hostname: itay-keycloak-test.runailabs-cs.com
+#   hostname: sh-213.runailabs-cs.com
 #   hostnameStrict: true
+#   pathType: Prefix
 #   ingressClassName: nginx
 #   tls: true
 #   extraTls:
 #   - hosts:
-#     - itay-keycloak-test.runailabs-cs.com
+#     - sh-213.runailabs-cs.com
 #     secretName: runai-backend-tls
+
+## to serve on a separate domain: https://itay-keycloak-test.runailabs-cs.com/
+ingress:
+  enabled: true
+  hostname: HOST_DOMAIN
+  hostnameStrict: true
+  ingressClassName: nginx
+  tls: true
+  extraTls:
+  - hosts:
+    - HOST_PATH
+    secretName: HOST_TLS_SECRET
 
 logging:
   level: DEBUG
