@@ -69,14 +69,14 @@ new_user = {
 new_context = {
       "context": {
         "cluster": data['clusters'][0]['name'],
-        "user": "admin"
+        "user": "runai-user"
       },
       "name": "runai-user"
     }
 
 data['contexts'][0]['name'] = "cluster-admin"
 data['current-context'] = "cluster-admin"
-data['users'].append(new_context)
+data['contexts'].append(new_context)
 data['users'].append(new_user)
 
 # Write the modified data back to YAML
