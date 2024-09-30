@@ -18,16 +18,16 @@ import sys
 #         --self-hosted
 
 def parse_arguments():
-    parser = argparse.ArgumentParser(description="Script to handle SELF_HOSTED and CTRL_PLANE_URL arguments")
+    parser = argparse.ArgumentParser(description="Env-In-A-Click kubeconfig file modify script")
     parser.add_argument("--self-hosted", action="store_true", help="Set cluster as self hosted (default is False for saas clsuters))")
     parser.add_argument("--input-yaml", dest="input_yaml", help="Set the input file path")
     parser.add_argument("--output-yaml", dest="output_yaml", help="Set the output file path")
-    parser.add_argument("--ctrl-plane-url", dest="ctrl_plane_url", help="Set the CTRL_PLANE_URL value")
+    parser.add_argument("--ctrl-plane-url", dest="ctrl_plane_url", help="Set the ctrl plane URL")
     return parser.parse_args()
 
 def validate_args(args):
     if args.self_hosted and not args.ctrl_plane_url:
-        print("Error: If SELF_HOSTED is provided, CTRL_PLANE_URL must also be provided.")
+        print("Error: '--ctrl-plane-url' must be provided if '--self-hosted' is set.")
         sys.exit(1)
 
 args = parse_arguments()
@@ -66,12 +66,6 @@ new_user = {
   }
 }
 
-data['users'].append(new_user)
-
-# modify existing context & add new context
-data['contexts'][0]['name'] = "cluster-admin"
-data['current-context'] = "cluster-admin"
-
 new_context = {
       "context": {
         "cluster": data['clusters'][0]['name'],
@@ -80,7 +74,10 @@ new_context = {
       "name": "runai-user"
     }
 
+data['contexts'][0]['name'] = "cluster-admin"
+data['current-context'] = "cluster-admin"
 data['users'].append(new_context)
+data['users'].append(new_user)
 
 # Write the modified data back to YAML
 with open(OUTPUT_YAML, 'w') as file:
