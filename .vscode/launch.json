@@ -1,0 +1,27 @@
+{
+  "version": "0.2.0",
+  "configurations": [
+
+    {
+      "name": "Temp Token Script (saas)",
+      "type": "python",
+      "request": "launch",
+      "program": "${file}",
+      "console": "integratedTerminal",
+      "args": [
+        "--username",
+        "devops@run.ai",
+        "--password",
+        "Abcd!234",
+        "--CTRL_PLANE_URL",
+        "https://envinaclick.run.ai",
+        "--KEYCLOAK_URL",
+        "https://app.run.ai",
+        "--KEYCLOAK_REALM",
+        "envinaclick",
+        "--debug"
+      ],
+      "justMyCode": true
+    }
+  ]
+}
