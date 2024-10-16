@@ -29,13 +29,15 @@ if wandb_api_key:
     print(f"env var WANDB_API_KEY found")
     try:
         import wandb
-        wandb_logger = True
         print("WandB logging enabled.")
+        wandb_logger = True
     except ImportError:
         print("WandB pip pacakage not found, installing it:")
         install_package("wandb")
         import wandb
         importlib.reload(wandb)
+        print("WandB logging enabled.")
+        wandb_logger = True
 else:
     print("env var WANDB_API_KEY is either not set or is empty.")
 
