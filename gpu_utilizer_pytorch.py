@@ -1,11 +1,30 @@
-import torch
 import time
 import subprocess
 import os
+import sys
+import importlib
 
+def install_package(package_name):
+    try:
+        subprocess.check_call([sys.executable, "-m", "pip", "install", package_name])
+        print(f"Package '{package_name}' installed successfully.")
+    except subprocess.CalledProcessError as e:
+        print(f"Error occurred while installing package '{package_name}': {e}")
+
+# check torch is installed
+try:
+    import torch
+    wandb_logger = True
+    print("torch package found.")
+except ImportError:
+    print("torch pacakage not found, installing it:")
+    install_package("torch")
+    import torch
+    importlib.reload(torch)
+
+# check wandb is installed
 wandb_logger = False
 wandb_api_key = os.getenv("WANDB_API_KEY")
-
 if wandb_api_key:
     print(f"env var WANDB_API_KEY found")
     try:
@@ -13,7 +32,10 @@ if wandb_api_key:
         wandb_logger = True
         print("WandB logging enabled.")
     except ImportError:
-        print("Warning: WandB is not installed, logging will be disabled.")
+        print("WandB pip pacakage not found, installing it:")
+        install_package("wandb")
+        import wandb
+        importlib.reload(wandb)
 else:
     print("env var WANDB_API_KEY is either not set or is empty.")
 
