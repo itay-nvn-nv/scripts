@@ -22,7 +22,7 @@ except ImportError:
     import torch
     importlib.reload(torch)
 
-# check wandb is installed
+# check if wandb api token exists AND if wandb pip package is installed
 wandb_logger = False
 wandb_api_key = os.getenv("WANDB_API_KEY")
 if wandb_api_key:
@@ -57,7 +57,7 @@ x = torch.linspace(0, 4, 16*1024**2).cuda()
 # init loop data
 iteration = 0
 start_time = time.time()
-duration_minutes = 30
+duration_minutes = 60
 duration_limit = duration_minutes * 60
 
 # Main loop
