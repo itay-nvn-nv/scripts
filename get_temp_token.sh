@@ -13,7 +13,7 @@ fi
 # Debugging helper function
 debug() {
   if [ "$DEBUG" = true ]; then
-    echo "DEBUG::: $1"
+    echo "DEBUG => $1"
   fi
 }
 
@@ -74,12 +74,13 @@ echo
 # get login page
 echo "### Step 1: get login page"
 echo
-response=$(curl -s -i curl "$KEYCLOAK_URL/auth/realms/$KEYCLOAK_REALM/protocol/openid-connect/auth?response_type=code&connection=$KEYCLOAK_REALM&client_id=$client_id&redirect_uri=$redirect_uri_encoded&scope=openid+email+profile+offline_access")
+login_page_url="$KEYCLOAK_URL/auth/realms/$KEYCLOAK_REALM/protocol/openid-connect/auth?response_type=code&connection=$KEYCLOAK_REALM&client_id=$client_id&redirect_uri=$redirect_uri_encoded&scope=openid+email+profile+offline_access"
+response=$(curl -s -i $login_page_url)
 
 AUTH_SESSION_ID=$(echo "$response" | grep "AUTH_SESSION_ID=" | awk -F'AUTH_SESSION_ID=' '{print substr($2, 1, 53)}')
 AUTH_SESSION_ID_LEGACY=$(echo "$response" | grep "AUTH_SESSION_ID_LEGACY=" | awk -F'AUTH_SESSION_ID_LEGACY=' '{print substr($2, 1, 53)}')
 KC_RESTART=$(echo "$response" | grep "KC_RESTART=" | awk -F'KC_RESTART=' '{print substr($2, 1, 991)}')
-
+debug "### login page url: ${login_page_url}"
 debug "### Response cookies:"
 debug "AUTH_SESSION_ID: ${AUTH_SESSION_ID}"
 debug "AUTH_SESSION_ID_LEGACY: ${AUTH_SESSION_ID_LEGACY}"
@@ -100,7 +101,8 @@ echo
 echo "### Step 2: perform login"
 echo
 
-login_response=$(curl -v "$KEYCLOAK_URL/auth/realms/$KEYCLOAK_REALM/login-actions/authenticate?session_code=$session_code&execution=$execution&client_id=$client_id&tab_id=$tab_id" \
+perform_login_url="$KEYCLOAK_URL/auth/realms/$KEYCLOAK_REALM/login-actions/authenticate?session_code=$session_code&execution=$execution&client_id=$client_id&tab_id=$tab_id"
+login_response=$(curl -v $perform_login_url \
   -H "content-type: application/x-www-form-urlencoded" \
   -H "cookie: AUTH_SESSION_ID=$AUTH_SESSION_ID; AUTH_SESSION_ID_LEGACY=$AUTH_SESSION_ID_LEGACY; KC_RESTART=$KC_RESTART" \
   --data-raw "username=$username_encoded&password=$password_encoded&credentialId=" 2>&1)
@@ -111,6 +113,8 @@ code=$(echo -e $login_response | grep "location: " | awk -F'&code=' '{print subs
 debug "### Response URL params:"
 debug "session_state: ${session_state}"
 debug "code: ${code}"
+debug "url: ${perform_login_url}" # temp
+debug "response content: ${login_response}" # temp
 echo
 
 # get token
@@ -128,7 +132,12 @@ token_response=$(curl -s "$CTRL_PLANE_URL/api/v1/token" \
   --data-raw "{\"grantType\":\"exchange_token\",\"code\":\"$code\",\"redirectUri\":\"$CTRL_PLANE_URL/login/callback\"}")
 
 id_token=$(echo $token_response | jq -r '.idToken')
+temp_token_file_path="/tmp/runai_temp_token"
 echo "### the idToken: $id_token"
+echo
+echo $id_token > $temp_token_file_path
+echo "### token written to file: $temp_token_file_path"
+cat $temp_token_file_path
 echo
 
 # show decoded token

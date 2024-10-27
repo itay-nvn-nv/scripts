@@ -34,8 +34,7 @@ debug(f"Password: {password}")
 debug(f"Control Plane URL: {CTRL_PLANE_URL}")
 debug(f"Keycloak URL: {KEYCLOAK_URL}")
 debug(f"Keycloak realm: {KEYCLOAK_REALM}")
-debug(f"Keycloak client ID: {client_id}")
-print()
+debug(f"Keycloak client ID: {client_id}\n")
 
 REDIRECT_URI_DECODED = f"{CTRL_PLANE_URL}/login/callback"
 ISS_DECODED = f"{KEYCLOAK_URL}/auth/realms/{KEYCLOAK_REALM}"
@@ -48,52 +47,46 @@ debug("### Generated URL-encoded values:")
 debug(f"Username: {username_encoded}")
 debug(f"Password: {password_encoded}")
 debug(f"redirect URI: {redirect_uri_encoded}")
-debug(f"iss: {iss_encoded}")
-print()
+debug(f"iss: {iss_encoded}\n")
 
 # Step 1: get login page
 def get_login_page():
-    print("### Step 1: get login page")
-    print()
+    print("### Step 1: get login page\n")
     response = requests.get(f"{KEYCLOAK_URL}/auth/realms/{KEYCLOAK_REALM}/protocol/openid-connect/auth", 
                             params={
                                 "response_type": "code",
                                 "connection": KEYCLOAK_REALM,
                                 "client_id": client_id,
-                                "redirect_uri": redirect_uri_encoded,
+                                "redirect_uri": REDIRECT_URI_DECODED,
                                 "scope": "openid email profile offline_access"
-                            })
+                            }, stream=True)
 
     cookies = response.cookies
+    global AUTH_SESSION_ID
     AUTH_SESSION_ID = cookies.get('AUTH_SESSION_ID')
+    global AUTH_SESSION_ID_LEGACY
     AUTH_SESSION_ID_LEGACY = cookies.get('AUTH_SESSION_ID_LEGACY')
+    global KC_RESTART
     KC_RESTART = cookies.get('KC_RESTART')
 
     debug("### Response cookies:")
     debug(f"AUTH_SESSION_ID: {AUTH_SESSION_ID}")
     debug(f"AUTH_SESSION_ID_LEGACY: {AUTH_SESSION_ID_LEGACY}")
-    debug(f"KC_RESTART: {KC_RESTART}")
-    print()
-    # Extract session_code, execution, and tab_id from the response
-    # This part might need adjustment based on the actual response structure
-    session_code = ''
-    execution = ''
-    tab_id = ''
-    # Add logic to extract these values from the response
+    debug(f"KC_RESTART: {KC_RESTART}\n")
+
+    response_content = str(response.content)
+    global session_code
+    session_code = response_content[ response_content.find("session_code=") + len("session_code=") : response_content.find("session_code=") + len("session_code=") + 43 ]
+    global execution
+    execution = response_content[ response_content.find("execution=") + len("execution=") : response_content.find("execution=") + len("execution=") + 36 ]
+    global tab_id
+    tab_id = response_content[ response_content.find("tab_id=") + len("tab_id=") : response_content.find("tab_id=") + len("tab_id=") + 11 ]
 
     debug("### Response URL params:")
     debug(f"session_code: {session_code}")
     debug(f"execution: {execution}")
     debug(f"tab_id: {tab_id}")
-    print()
-    
-    print(response.request.url)
-
-    for cookie in response.cookies:
-        print(f"COOKIES | {cookie.name}: {cookie.value}")
-
-    for header, value in response.headers.items():
-        print(f"HEADERS | {header}: {value}")
+    debug(f"get login page url: {response.request.url}\n")
 
 # Step 2: perform login
 def perform_login():
@@ -120,15 +113,22 @@ def perform_login():
         allow_redirects=False
     )
 
-    location = login_response.headers.get('Location', '')
+    response_content = str(login_response.content)
+    print("##### resp cont:")
+    print(response_content)
+    print()
+    print("#### Response Headers:")
+    for key, value in login_response.headers.items():
+        print(f"{key}: {value}")
     global session_state
+    session_state = ""
     global code 
-    session_state = urllib.parse.parse_qs(urllib.parse.urlparse(location).query).get('session_state', [''])[0]
-    code = urllib.parse.parse_qs(urllib.parse.urlparse(location).query).get('code', [''])[0]
+    code = ""
 
     debug("### Response URL params:")
     debug(f"session_state: {session_state}")
     debug(f"code: {code}")
+    debug(f"perform login url: {login_response.request.url}\n")
     print()
 
 # Step 3: get token
@@ -189,6 +189,6 @@ def test_token():
 
 
 get_login_page()
-# perform_login()
+perform_login()
 # get_token()
 # test_token()
