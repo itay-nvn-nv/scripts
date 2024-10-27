@@ -29,15 +29,12 @@ echo
 # 2) create project
 if [ -z "$PROJECT_ID" ]; then
     echo "PROJECT_ID is not set, creating new project: $PROJECT_NAME"
-    PROJECT_ID=$(curl -s --location "$WEBSERVER_URL/api/v2.30/projects.create" \
+    PROJECT_RESPONSE=$(curl -s --location "$WEBSERVER_URL/api/v2.30/projects.create" \
     --header "Cookie: clearml-token-k8s=$CLEARML_TOKEN" \
     --header 'Content-Type: application/json' \
-    --data "{
-        \"name\": \"$PROJECT_NAME\",
-        \"description\": \"test in progress\",
-        \"system_tags\": [],
-        \"default_output_destination\": null
-    }" | jq -r '.data.id')
+    --data "{\"name\": \"$PROJECT_NAME\",\"description\": \"test in progress\",\"system_tags\": [],\"default_output_destination\": null}")
+    PROJECT_ID=$(echo $PROJECT_RESPONSE | jq -r '.data.id')
+    echo "api call response: $PROJECT_RESPONSE"
     echo "PROJECT_ID: $PROJECT_ID"
 else
     echo "PROJECT_ID is set to: $PROJECT_ID"
@@ -50,9 +47,7 @@ if [ -z "$QUEUE_ID" ]; then
     QUEUE_ID=$(curl -s --location "$WEBSERVER_URL/api/v2.30/queues.create" \
     --header "Cookie: clearml-token-k8s=$CLEARML_TOKEN" \
     --header 'Content-Type: application/json' \
-    --data "{
-        \"name\": \"$QUEUE_NAME\"
-    }" | jq -r '.data.id')
+    --data "{\"name\": \"$QUEUE_NAME\"}" | jq -r '.data.id')
     echo "QUEUE_ID: $QUEUE_ID"
 else
     echo "QUEUE_ID is set to: $QUEUE_ID"
