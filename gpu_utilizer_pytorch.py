@@ -57,7 +57,7 @@ x = torch.linspace(0, 4, 16*1024**2).cuda()
 # init loop data
 iteration = 0
 start_time = time.time()
-duration_minutes = 60
+duration_minutes = 600
 duration_limit = duration_minutes * 60
 
 # Main loop
