@@ -15,7 +15,7 @@
 ### optional env vars:
 # PROJECT_ID="" # (if provided, project and queue creation will be skipped, and only task will be created)
 # QUEUE_ID="" # (if provided, project and queue creation will be skipped, and only task will be created)
-# SCRIPT_OPERATION="" # full or none will run the entire script, "create-task" will only create task
+# SCRIPT_OPERATION="" # "full" or none will run the entire script, "create-task" will only create task
 
 # 1) login using default user & retrieve token:
 CLEARML_TOKEN=$(curl -s --location --request POST "$WEBSERVER_URL/api/v2.30/auth.login" \
@@ -28,7 +28,11 @@ CLEARML_TOKEN=$(curl -s --location --request POST "$WEBSERVER_URL/api/v2.30/auth
 echo "CLEARML_TOKEN: $CLEARML_TOKEN"
 echo
 
-SCRIPT_OPERATION="full"
+if [ -z "$SCRIPT_OPERATION" ]; then
+    SCRIPT_OPERATION="full"
+fi
+
+echo "SCRIPT_OPERATION: $SCRIPT_OPERATION"
 
 if [[ "$SCRIPT_OPERATION" == "full" ]]; then
     echo "SCRIPT_OPERATION is set to 'full'."

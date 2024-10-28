@@ -12,14 +12,7 @@ parser.add_argument("--CTRL_PLANE_URL", help="Control Plane URL", type=str, requ
 parser.add_argument("--KEYCLOAK_URL", help="Keycloak URL", type=str, required=True)
 parser.add_argument("--KEYCLOAK_REALM", help="Keycloak realm", type=str, required=True)
 parser.add_argument("--debug", action="store_true", help="Enable debug mode", default=False)
-
 args = parser.parse_args()
-
-DEBUG = args.debug
-
-def debug(message):
-    if DEBUG:
-        print(f"DEBUG => {message}")
 
 username=args.username
 password=args.password
@@ -27,6 +20,13 @@ CTRL_PLANE_URL=args.CTRL_PLANE_URL
 KEYCLOAK_URL=args.KEYCLOAK_URL
 KEYCLOAK_REALM=args.KEYCLOAK_REALM
 client_id = "runai-admin-ui"
+REDIRECT_URI_DECODED = f"{CTRL_PLANE_URL}/login/callback"
+ISS_DECODED = f"{KEYCLOAK_URL}/auth/realms/{KEYCLOAK_REALM}"
+DEBUG = args.debug
+
+def debug(message):
+    if DEBUG:
+        print(f"DEBUG => {message}")
 
 debug("### Input values:")
 debug(f"Username: {username}")
@@ -35,19 +35,6 @@ debug(f"Control Plane URL: {CTRL_PLANE_URL}")
 debug(f"Keycloak URL: {KEYCLOAK_URL}")
 debug(f"Keycloak realm: {KEYCLOAK_REALM}")
 debug(f"Keycloak client ID: {client_id}\n")
-
-REDIRECT_URI_DECODED = f"{CTRL_PLANE_URL}/login/callback"
-ISS_DECODED = f"{KEYCLOAK_URL}/auth/realms/{KEYCLOAK_REALM}"
-username_encoded = urllib.parse.quote(username, safe='')
-password_encoded = urllib.parse.quote(password, safe='')
-redirect_uri_encoded = urllib.parse.quote(REDIRECT_URI_DECODED, safe='')
-iss_encoded = urllib.parse.quote(ISS_DECODED, safe='')
-
-debug("### Generated URL-encoded values:")
-debug(f"Username: {username_encoded}")
-debug(f"Password: {password_encoded}")
-debug(f"redirect URI: {redirect_uri_encoded}")
-debug(f"iss: {iss_encoded}\n")
 
 # Step 1: get login page
 def get_login_page():
@@ -106,29 +93,24 @@ def perform_login():
             "cookie": f"AUTH_SESSION_ID={AUTH_SESSION_ID}; AUTH_SESSION_ID_LEGACY={AUTH_SESSION_ID_LEGACY}; KC_RESTART={KC_RESTART}"
         },
         data={
-            "username": username_encoded,
-            "password": password_encoded,
+            "username": username,
+            "password": password,
             "credentialId": ""
         },
         allow_redirects=False
     )
 
-    response_content = str(login_response.content)
-    print("##### resp cont:")
-    print(response_content)
-    print()
-    print("#### Response Headers:")
-    for key, value in login_response.headers.items():
-        print(f"{key}: {value}")
+    location = login_response.headers.get("Location")
+
     global session_state
-    session_state = ""
     global code 
-    code = ""
+
+    session_state = location[ location.find("session_state=") + len("session_state=") : location.find("session_state=") + len("session_state=") + 36 ]
+    code = location[ location.find("code=") + len("code=") : location.find("code=") + len("code=") + 110 ]
 
     debug("### Response URL params:")
     debug(f"session_state: {session_state}")
     debug(f"code: {code}")
-    debug(f"perform login url: {login_response.request.url}\n")
     print()
 
 # Step 3: get token
@@ -145,7 +127,7 @@ def get_token():
             'content-type': 'application/json',
             'origin': CTRL_PLANE_URL,
             'priority': 'u=1, i',
-            'referer': f"{CTRL_PLANE_URL}/login/callback?session_state={session_state}&iss={iss_encoded}&code={code}"
+            'referer': f"{CTRL_PLANE_URL}/login/callback?session_state={session_state}&iss={ISS_DECODED}&code={code}"
         },
         json={
             "grantType": "exchange_token",
@@ -190,5 +172,5 @@ def test_token():
 
 get_login_page()
 perform_login()
-# get_token()
-# test_token()
+get_token()
+test_token()
