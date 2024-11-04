@@ -16,24 +16,19 @@ import subprocess
 #         --ctrl-plane-url https://blabla.runailabs-cs.com \
 #         --self-hosted
 
-def parse_arguments():
-    parser = argparse.ArgumentParser(description="Env-In-A-Click kubeconfig file modify script")
-    parser.add_argument("--self-hosted", action="store_true", help="Set cluster as self hosted (default is False for saas clsuters))")
-    parser.add_argument("--input-yaml", dest="input_yaml", help="Set the input file path")
-    parser.add_argument("--ctrl-plane-url", dest="ctrl_plane_url", help="Set the ctrl plane URL")
-    parser.add_argument("--keycloak-realm", dest="keycloak_realm", help="Set the keycloak realm")
-    return parser.parse_args()
+parser = argparse.ArgumentParser(description="Env-In-A-Click kubeconfig file modify script", formatter_class=argparse.ArgumentDefaultsHelpFormatter)
+parser.add_argument("--self-hosted", action="store_true", default=False, help="Set cluster as self hosted")
+parser.add_argument("--input-yaml", dest="input_yaml", type=str, required=True, help="Set the input file path")
+parser.add_argument("--ctrl-plane-url", dest="ctrl_plane_url", default="https://envinaclick.run.ai", type=str, help="ctrl plane URL")
+parser.add_argument("--keycloak-realm", dest="keycloak_realm", default="envinaclick", type=str, help="keycloak realm")
+args = parser.parse_args()
 
-def validate_args(args):
-    if args.self_hosted and not args.ctrl_plane_url:
-        print("Error: '--ctrl-plane-url' must be provided if '--self-hosted' is set.")
-        sys.exit(1)
+if args.self_hosted and not args.ctrl_plane_url:
+    print("Error: '--ctrl-plane-url' must be provided if '--self-hosted' is set.")
+    sys.exit(1)
 
-args = parse_arguments()
-validate_args(args)
-
-CTRL_PLANE_URL = args.ctrl_plane_url or ""
-REALM= args.keycloak_realm or "envinaclick"
+CTRL_PLANE_URL = args.ctrl_plane_url
+REALM= args.keycloak_realm
 IDP_ISSUER_URL=f"https://app.run.ai/auth/realms/{REALM}"
 REDIRECT_URI=f"{CTRL_PLANE_URL}/oauth-code"
 INPUT_YAML=args.input_yaml
