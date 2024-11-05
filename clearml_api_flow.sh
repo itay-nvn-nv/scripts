@@ -64,18 +64,6 @@ if [[ "$SCRIPT_OPERATION" == "full" ]]; then
     fi
     echo
 elif [[ "$SCRIPT_OPERATION" == "create-task" ]]; then
-    # get queue ID by name:
-    echo "getting queue ID from provided name: $QUEUE_NAME"
-    QUEUE_ID=$(curl -s --location "$WEBSERVER_URL/api/v2.30/queues.get_all" \
-    --header "Cookie: clearml-token-k8s=$CLEARML_TOKEN" \
-    --header 'Content-Type: application/json' | \
-    jq -r ".data.queues[] | select(.name == \"$QUEUE_NAME\") | .id")
-    # get project ID by name:
-    echo "getting project ID from provided name: $PROJECT_NAME"
-    PROJECT_ID=$(curl -s --location "$WEBSERVER_URL/api/v2.30/projects.get_all" \
-    --header "Cookie: clearml-token-k8s=$CLEARML_TOKEN" \
-    --header 'Content-Type: application/json' | \
-    jq -r ".data.queues[] | select(.name == \"$PROJECT_NAME\") | .id")
     echo "QUEUE_ID: $QUEUE_ID"
     echo "PROJECT_ID: $PROJECT_ID"
 fi
