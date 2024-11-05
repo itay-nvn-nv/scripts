@@ -14,8 +14,6 @@ bash ~/scripts/cli_downloader.sh
 ```
 python3 ~/scripts/envinaclick_kubeconfig_modifier.py \
 --input-yaml $KC_PATH \
---ctrl-plane-url $CTRL_PLANE_URL \
---keycloak-realm $KEYCLOAK_REALM
 ```
 
 ## get token:

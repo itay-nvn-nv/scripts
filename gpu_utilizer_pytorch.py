@@ -60,6 +60,17 @@ start_time = time.time()
 duration_minutes = 600
 duration_limit = duration_minutes * 60
 
+# Check if CUDA is available
+if torch.cuda.is_available():
+    num_gpus = torch.cuda.device_count()
+    print(f"CUDA is available. Number of GPUs: {num_gpus}")
+    for i in range(num_gpus):
+        print(f"GPU {i}: {torch.cuda.get_device_name(i)}")
+        print(f"  Memory Allocated: {torch.cuda.memory_allocated(i) / 1024**2:.2f} MB")
+        print(f"  Memory Cached: {torch.cuda.memory_reserved(i) / 1024**2:.2f} MB")
+else:
+    print("CUDA is not available.")
+
 # Main loop
 try:
     while True:
