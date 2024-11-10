@@ -1,13 +1,20 @@
 #!/bin/bash
 
 # set variables and functions
-
-DEBUG=false  # Default is off
+DEBUG=false
+CLI=false
 
 # Check if the script was called with the --debug flag
 if [ "$1" == "--debug" ]; then
   DEBUG=true
   shift  # Remove --debug from arguments
+fi
+
+# Check if the script was called with the --cli flag
+if [ "$1" == "--cli" ]; then
+  DEBUG=true
+  CLI=true
+  shift  # Remove --cli from arguments
 fi
 
 # Debugging helper function
@@ -17,10 +24,11 @@ debug() {
   fi
 }
 
-# Check if exactly 5 parameters are provided
-if [ "$#" -ne 5 ]; then
-  echo "Usage: $0 <username> <password> <CTRL_PLANE_URL> <KEYCLOAK_URL> <KEYCLOAK_REALM>"
-  exit 1
+# Check if the script was called with the --help flag
+if [ "$1" == "--help" ]; then
+  echo "Usage: $0 [--debug] [--cli] <username> <password> <CTRL_PLANE_URL> <KEYCLOAK_URL> <KEYCLOAK_REALM> [CLI_STATE]"
+  echo "[optional_args] <MANDATORY_ARGS>"
+  exit 0
 fi
 
 urlencode() {
@@ -44,7 +52,7 @@ password=$2
 CTRL_PLANE_URL=$3
 KEYCLOAK_URL=$4
 KEYCLOAK_REALM=$5
-client_id="runai-admin-ui" # fixed for runai default client, can be changed: auth/admin/master/console/#/$KEYCLOAK_REALM/clients
+CLI_STATE=$6
 
 # Printing the variables
 debug "### Input values:"
@@ -54,15 +62,24 @@ debug "Control Plane URL: $CTRL_PLANE_URL"
 debug "Keycloak URL: $KEYCLOAK_URL"
 debug "Keycloak realm: $KEYCLOAK_REALM"
 debug "Keycloak client ID: $client_id"
+debug "CLI state code: $CLI_STATE"
+
 echo
 
 # encoding vars
-REDIRECT_URI_DECODED="$CTRL_PLANE_URL/login/callback"
+if [ "$CLI" = true ]; then
+  REDIRECT_URI_DECODED="$CTRL_PLANE_URL/oauth-code"
+  client_id="runai-cli"
+else
+  REDIRECT_URI_DECODED="$CTRL_PLANE_URL/login/callback"
+  client_id="runai-admin-ui" # fixed for runai default client, can be changed: auth/admin/master/console/#/$KEYCLOAK_REALM/clients
+fi
 ISS_DECODED="$KEYCLOAK_URL/auth/realms/$KEYCLOAK_REALM"
 username_encoded=$(urlencode $username)
 password_encoded=$(urlencode $password)
 redirect_uri_encoded=$(urlencode $REDIRECT_URI_DECODED)
 iss_encoded=$(urlencode $ISS_DECODED)
+
 
 debug "### Generated URL-encoded values:"
 debug "Username: $username_encoded"
@@ -74,7 +91,12 @@ echo
 # get login page
 echo "### Step 1: get login page"
 echo
-login_page_url="$KEYCLOAK_URL/auth/realms/$KEYCLOAK_REALM/protocol/openid-connect/auth?response_type=code&connection=$KEYCLOAK_REALM&client_id=$client_id&redirect_uri=$redirect_uri_encoded&scope=openid+email+profile+offline_access"
+if [ "$CLI" = true ]; then
+  login_page_url="$KEYCLOAK_URL/auth/realms/$KEYCLOAK_REALM/protocol/openid-connect/auth?response_type=code&client_id=$client_id&redirect_uri=$redirect_uri_encoded&scope=email+openid+offline_access&access_type=offline&state=$CLI_STATE"
+else
+  login_page_url="$KEYCLOAK_URL/auth/realms/$KEYCLOAK_REALM/protocol/openid-connect/auth?response_type=code&client_id=$client_id&redirect_uri=$redirect_uri_encoded&scope=openid+email+profile+offline_access&connection=$KEYCLOAK_REALM"
+fi
+
 response=$(curl -s -i $login_page_url)
 
 AUTH_SESSION_ID=$(echo "$response" | grep "AUTH_SESSION_ID=" | awk -F'AUTH_SESSION_ID=' '{print substr($2, 1, 53)}')

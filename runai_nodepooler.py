@@ -1,4 +1,3 @@
-from runai.client import RunaiClient
 import requests
 import json
 import subprocess
@@ -8,15 +7,14 @@ import os
 API_TOKEN=os.getenv("NP_API_TOKEN")
 CLUSTER_ID=os.getenv("NP_CLUSTER_ID")
 BASE_URL=os.getenv("NP_BASE_URL")
-
-np_name_base=os.getenv("NP_NAME_BASE") or "mambo-number"
-np_key_base=os.getenv("NP_KEY_BASE") or "itay.lolz/mambo"
-np_value_base=os.getenv("NP_VALUE_BASE") or "number"
+np_key_base=os.getenv("NP_KEY_BASE") or "nature.gov/animal"
 custom_role=os.getenv("NP_CUSTOM_ROLE") or "itay-worker"
 
 url = f"{BASE_URL}/v1/k8s/clusters/{CLUSTER_ID}/node-pools"
 auth_header=f"Bearer {API_TOKEN}"
 headers = {'Authorization': auth_header, 'Content-Type': 'application/json'}
+animals = ["owl", "falcon", "lion", "shark", "horse", "ostrich", "kangaroo", "dog", "horse", "jackrabbit", "coyote",
+            "turtle", "hyena", "zebra", "snake", "dolphin", "gazelle", "rabbit", "panda", "monkey", "buck"]
 
 # create a list of all non-ctrl-plane nodes
 try:
@@ -32,10 +30,9 @@ except subprocess.CalledProcessError as e:
 
 # for each listed node, label it with custom label + new role, then create a corresponding nodepool in runai
 for i, node in enumerate(node_list, start=1):
-
-    np_name=f"{np_name_base}-{i}"
+    np_name=f"{animals[i]}-worker"
     np_key=np_key_base
-    np_value=f"{np_value_base}-{i}"
+    np_value=animals[i]
 
     custom_label=f"{np_key}={np_value}"
     role_label=f"node-role.kubernetes.io/{custom_role}=wow"
@@ -63,8 +60,7 @@ for i, node in enumerate(node_list, start=1):
     response = requests.request("POST", url, headers=headers, data=payload)
     print(response.text)
 
-# create project
-
+# create project TBA
 url = f"{BASE_URL}/api/v1/org-unit/projects"
 auth_header=f"Bearer {API_TOKEN}"
 headers = {'Authorization': auth_header, 'Content-Type': 'application/json'}
@@ -84,12 +80,12 @@ payload = json.dumps({
                 "overQuotaWeight": 2
             },
             "cpu": {
-                "deserved": null,
+                "deserved": None,
                 "limit": -1,
                 "overQuotaWeight": 2
             },
             "memory": {
-                "deserved": null,
+                "deserved": None,
                 "limit": -1,
                 "overQuotaWeight": 2,
                 "units": "Mib"
@@ -106,12 +102,12 @@ payload = json.dumps({
                 "overQuotaWeight": 2
             },
             "cpu": {
-                "deserved": null,
+                "deserved": None,
                 "limit": -1,
                 "overQuotaWeight": 2
             },
             "memory": {
-                "deserved": null,
+                "deserved": None,
                 "limit": -1,
                 "overQuotaWeight": 2,
                 "units": "Mib"
@@ -128,12 +124,12 @@ payload = json.dumps({
                 "overQuotaWeight": 2
             },
             "cpu": {
-                "deserved": null,
+                "deserved": None,
                 "limit": -1,
                 "overQuotaWeight": 2
             },
             "memory": {
-                "deserved": null,
+                "deserved": None,
                 "limit": -1,
                 "overQuotaWeight": 2,
                 "units": "Mib"
@@ -148,6 +144,5 @@ payload = json.dumps({
         "default"
     ]
 })
-
 # response = requests.request("POST", url, headers=headers, data=payload)
 # print(response.text)
