@@ -84,11 +84,12 @@ kubectl wait --for=condition=Ready pods -l mission=torun --timeout=60s -n $NAMES
 # Test DNS resolution and connectivity
 echo -e "\nTesting DNS resolution and connectivity between pods... ==="
 for SRC_NODE in $NODE_NAMES; do
+    echo-color "====== Executing to pod '$SRC_POD' (on node '$SRC_NODE')..."
     SRC_POD="${TEST_POD_BASE}-${SRC_NODE}"
     for DST_NODE in $NODE_NAMES; do
         if [ "$SRC_NODE" != "$DST_NODE" ]; then
             DST_SVC="${TEST_SVC_BASE}-${DST_NODE}"
-            echo-color "=== From pod '$SRC_POD' to service '$DST_SVC':"
+            echo-color "=== Calling to service '$DST_SVC' (on node '$DST_NODE'):"
             kubectl exec -n $NAMESPACE $SRC_POD -c nginx -- curl -s $DST_SVC.$NAMESPACE.svc.cluster.local && echo
         fi
     done
