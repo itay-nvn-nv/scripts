@@ -37,8 +37,8 @@ echo-color "=== Node list: ==="
 kubectl get nodes -o "custom-columns=NAME:.metadata.name,STATUS:.status.conditions[-1].type,K8S_VERSION:.status.nodeInfo.kubeletVersion,CONTAINERD:.status.nodeInfo.containerRuntimeVersion,OS:.status.nodeInfo.osImage,CPU_TOTAL:.status.capacity.cpu,CPU_USED:.status.allocatable.cpu,MEMORY_TOTAL:.status.capacity.memory,MEMORY_USED:.status.allocatable.memory,GPU_TOTAL:.status.capacity.\"nvidia.com/gpu\",GPU_USED:.status.allocatable.\"nvidia.com/gpu\""
 
 # Create a namespace for testing
-echo-color "=== Creating namespace $NAMESPACE... ==="
-kubectl create namespace $NAMESPACE &> /dev/null || echo-color "=== Namespace $NAMESPACE already exists. ==="
+echo-color "=== Creating namespace '$NAMESPACE'... ==="
+kubectl create namespace $NAMESPACE || echo-color "=== Namespace $NAMESPACE already exists. ==="
 
 # Get node names
 echo-color "=== Retrieving node names... ==="
