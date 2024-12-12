@@ -34,7 +34,7 @@ TEST_SVC_BASE="test-svc"
 TEST_IMAGE="cyberdog123/http_echo_hello_world"
 
 echo-color "=== Node list: ==="
-kubectl get nodes -o "custom-columns=NAME:.metadata.name,STATUS:.status.conditions[-1].type,K8S_VERSION:.status.nodeInfo.kubeletVersion,CONTAINERD:.status.nodeInfo.containerRuntimeVersion,OS:.status.nodeInfo.osImage,CPU_TOTAL:.status.capacity.cpu,CPU_USED:.status.allocatable.cpu,MEMORY_TOTAL:.status.capacity.memory,MEMORY_USED:.status.allocatable.memory,GPU_TOTAL:.status.capacity.\"nvidia.com/gpu\",GPU_USED:.status.allocatable.\"nvidia.com/gpu\""
+kubectl get nodes -o "custom-columns=NAME:.metadata.name,STATUS:.status.conditions[-1].type,ADDRESS:.status.addresses[?(@.type=='InternalIP')].address,K8S_VERSION:.status.nodeInfo.kubeletVersion,CONTAINERD:.status.nodeInfo.containerRuntimeVersion,OS:.status.nodeInfo.osImage,CPU_TOTAL:.status.capacity.cpu,MEMORY_TOTAL:.status.capacity.memory,GPU_TOTAL:.status.capacity.\"nvidia.com/gpu\""
 
 # Create a namespace for testing
 echo-color "=== Creating namespace '$NAMESPACE'... ==="
@@ -87,21 +87,16 @@ echo-color "Testing DNS resolution and connectivity between pods... ==="
 echo
 for SRC_NODE in $NODE_NAMES; do
     SRC_POD="${TEST_POD_BASE}-${SRC_NODE}"
-    echo-color "====== Checking outgoing communications from node '$SRC_NODE'..."
+    echo-color "====== Checking node '$SRC_NODE'"
     for DST_NODE in $NODE_NAMES; do
         if [ "$SRC_NODE" != "$DST_NODE" ]; then
             DST_SVC="${TEST_SVC_BASE}-${DST_NODE}"
-            echo-color "=== Calling service '$DST_SVC': $(kubectl exec -n $NAMESPACE $SRC_POD -c nginx -- curl -s $DST_SVC.$NAMESPACE.svc.cluster.local)"
-            echo
+            echo-color "=== Calling service '$DST_SVC' from pod '$SRC_POD'..."
+            echo "=== Response: $(kubectl exec -n $NAMESPACE $SRC_POD -c nginx -- curl -s $DST_SVC.$NAMESPACE.svc.cluster.local)"
         fi
     done
     echo
 done
-
-# Cleanup resources
-echo-color "=== Cleaning up test resources... ==="
-kubectl delete namespace $NAMESPACE --wait &> /dev/null || echo-color "=== Failed to delete namespace $NAMESPACE. ==="
-
 echo-color "=== DNS resolution and inter-pod communication test complete. ==="
 
 echo-color "=== kube-system: ==="
@@ -109,3 +104,10 @@ kubectl -n kube-system get pods -o wide
 
 echo-color "=== NVIDIA GPU Operator: ==="
 kubectl -n gpu-operator get pods -o wide
+
+echo-color "=== Kubernetes cluster version is $(kubectl version | grep 'Server Version' | awk {'print $3'})"
+echo-color "=== $(kubectl cluster-info | head -n 1)"
+
+echo-color "=== Cleaning up test resources... ==="
+kubectl delete namespace $NAMESPACE --wait &> /dev/null || echo-color "=== Failed to delete namespace $NAMESPACE. ==="
+echo-color "=== all done :) ==="
