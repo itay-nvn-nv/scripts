@@ -32,7 +32,7 @@ done
 
 KEYCLOAK_CLIENT_SCOPE_NAME="$KEYCLOAK_CLIENT_ID-dedicated"
 
-# Get an admin-scoped access token
+# Get the root admin access token
 get_access_token() {
   ACCESS_TOKEN=$(curl -s -X POST "$KEYCLOAK_URL/realms/master/protocol/openid-connect/token" \
     -H "Content-Type: application/x-www-form-urlencoded" \
@@ -54,7 +54,7 @@ create_realm() {
   echo "##### realm '$KEYCLOAK_REALM' created"
 }
 
-# Create user
+# Create user in engineers group:
 create_user() {
 curl -s -X POST "$KEYCLOAK_URL/admin/realms/$KEYCLOAK_REALM/users" \
 -H "Authorization: Bearer $NEW_TOKEN" \
@@ -65,6 +65,7 @@ curl -s -X POST "$KEYCLOAK_URL/admin/realms/$KEYCLOAK_REALM/users" \
     \"username\":\"$USER_USERNAME\",
     \"enabled\":\"true\",
     \"emailVerified\": true,
+    \"groups\": ["engineers"],
     \"credentials\": [{\"type\": \"password\", \"value\": \"$USER_PASSWORD\", \"temporary\": false}]}"
 echo "##### example user '$USER_EMAIL' created"
 }
