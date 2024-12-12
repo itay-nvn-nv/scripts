@@ -31,7 +31,7 @@ echo-color() {
 NAMESPACE="network-test"
 TEST_POD_BASE="test-pod"
 TEST_SVC_BASE="test-svc"
-TEST_IMAGE="strm/helloworld-http"
+TEST_IMAGE="cyberdog123/http_echo_hello_world"
 
 echo-color "=== Node list: ==="
 kubectl get nodes -o "custom-columns=NAME:.metadata.name,STATUS:.status.conditions[-1].type,K8S_VERSION:.status.nodeInfo.kubeletVersion,CONTAINERD:.status.nodeInfo.containerRuntimeVersion,OS:.status.nodeInfo.osImage,CPU_TOTAL:.status.capacity.cpu,CPU_USED:.status.allocatable.cpu,MEMORY_TOTAL:.status.capacity.memory,MEMORY_USED:.status.allocatable.memory,GPU_TOTAL:.status.capacity.\"nvidia.com/gpu\",GPU_USED:.status.allocatable.\"nvidia.com/gpu\""
@@ -89,9 +89,7 @@ for SRC_NODE in $NODE_NAMES; do
         if [ "$SRC_NODE" != "$DST_NODE" ]; then
             DST_SVC="${TEST_SVC_BASE}-${DST_NODE}"
             echo-color "=== From pod '$SRC_POD' to service '$DST_SVC':"
-            kubectl exec -n $NAMESPACE $SRC_POD -c nginx -- curl -s $DST_SVC.$NAMESPACE.svc.cluster.local && echo || {
-                echo-color "=== Communication test failed: $SRC_POD -> $DST_SVC. ==="
-            }
+            kubectl exec -n $NAMESPACE $SRC_POD -c nginx -- curl -s $DST_SVC.$NAMESPACE.svc.cluster.local && echo
         fi
     done
 done
