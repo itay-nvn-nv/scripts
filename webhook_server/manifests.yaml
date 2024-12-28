@@ -1,0 +1,95 @@
+---
+# 1. First create the namespaces
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: webhooks
+---
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: testing
+  labels:
+    webhook-target: "true"
+---
+# 3. Create the Service
+apiVersion: v1
+kind: Service
+metadata:
+  name: sidecar-injector-svc
+  namespace: webhooks
+spec:
+  ports:
+  - name: webhook
+    port: 8443
+    targetPort: 8443
+  selector:
+    app: sidecar-injector
+---
+# 4. Create the Deployment
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: sidecar-injector
+  namespace: webhooks
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: sidecar-injector
+  template:
+    metadata:
+      labels:
+        app: sidecar-injector
+    spec:
+      containers:
+      - name: webhook
+        image: python:3.9-slim
+        ports:
+        - containerPort: 8443
+        command: ["python", "/app/server.py"]
+        volumeMounts:
+        - name: webhook-config
+          mountPath: /app
+        - name: webhook-tls
+          mountPath: "/app/certs"
+          readOnly: true
+      volumes:
+      - name: webhook-config
+        configMap:
+          name: webhook-server
+      - name: webhook-tls
+        secret:
+          secretName: webhook-tls
+          items:
+            - key: tls.crt
+              path: webhook.crt
+            - key: tls.key
+              path: webhook.key
+---
+# 5. Create the MutatingWebhookConfiguration
+apiVersion: admissionregistration.k8s.io/v1
+kind: MutatingWebhookConfiguration
+metadata:
+  name: pod-sidecar-injector
+webhooks:
+- name: sidecar-injector.webhooks.svc
+  admissionReviewVersions: ["v1"]
+  sideEffects: None
+  failurePolicy: Fail
+  rules:
+  - apiGroups: [""]
+    apiVersions: ["v1"]
+    operations: ["CREATE"]
+    resources: ["pods"]
+    scope: Namespaced
+  namespaceSelector:
+    matchLabels:
+      webhook-target: "true"
+  clientConfig:
+    service:
+      namespace: webhooks
+      name: sidecar-injector-svc
+      port: 8443
+      path: "/mutate"
+    caBundle: LS0tLS1CRUdJTiBDRVJUSUZJQ0FURS0tLS0tCk1JSURUVENDQWpXZ0F3SUJBZ0lVV2dLYWlhK090WkU1Njc5N3ZwM1RzQzcwbkdFd0RRWUpLb1pJaHZjTkFRRUwKQlFBd0xERXFNQ2dHQTFVRUF3d2hjMmxrWldOaGNpMXBibXBsWTNSdmNpMXpkbU11ZDJWaWFHOXZhM011YzNaagpNQjRYRFRJME1USXlPREl4TkRjd09Wb1hEVEkxTVRJeU9ESXhORGN3T1Zvd0xERXFNQ2dHQTFVRUF3d2hjMmxrClpXTmhjaTFwYm1wbFkzUnZjaTF6ZG1NdWQyVmlhRzl2YTNNdWMzWmpNSUlCSWpBTkJna3Foa2lHOXcwQkFRRUYKQUFPQ0FROEFNSUlCQ2dLQ0FRRUF5WmRPMnZsNVFKbnFWL1dXdkhRVFdzeHVNZlAzaERhMHk4cTFWa1dDaXlpawpldDNkTjhHZ3ZyL3RINEJUQmREWmtNNXJVN1ByY3FwQmZ5Mm82aUg0aEFTeklRb28zOGFmTWxKNm0rUTFaN3lBCjhLdmpvWjJrZDNNQnN0dWM0ekgvTExwYnVKQlM5Vm5xSzdHTGFxdVY4SVVsU3h0Y3UyZE1rbUE4UlYvTmtKalEKblZ2akYvSkI5VnZWL1FwTmNXK3kzd0VDdHBRNEJua2Erc2pvT0llSUhSSkI5OEREa29CK0J2QWtBRHZ5d2J1OApWeE5ZQ3ZOeW1nM1JVRnk3c0t1M3R2aGM5QjBqOEJrTk1IV2JwOHRqVDZYYVB6aVdwZDJuVnRTeURkTWpINkp3Cm13V3JaQlQrWDhlZ3h2c2dFQUdoY3FUYUxRWk5IdzFiVnhKSXg5cXpJUUlEQVFBQm8yY3daVEFKQmdOVkhSTUUKQWpBQU1Bc0dBMVVkRHdRRUF3SUY0REFzQmdOVkhSRUVKVEFqZ2lGemFXUmxZMkZ5TFdsdWFtVmpkRzl5TFhOMgpZeTUzWldKb2IyOXJjeTV6ZG1Nd0hRWURWUjBPQkJZRUZPaFNNQnBZWFpPcjNoWGdQUDhiSHByVWV2S1NNQTBHCkNTcUdTSWIzRFFFQkN3VUFBNElCQVFCYlIxSzZybndhVkFrQkoySUdvdzQwdm5SazRiYUlaemZPamU1K3FnUmoKd2NhbjY2ck10TGVxT0JlcjAwME4yOGxkY1BVMkxXYkxTaTUwOEVNREtHN2ZTNVFMcTBpZVk1UTBIOHdIZFRCVQovUm5nWTBzTkJ6d1dEVGNKcGcvYUlTRmdyK0NOZzF5SDEwZlNKRDFwVGxrUitZVjNoUCt4TnRObGRrWkpSZXF2CmFKNUpqZjlNRnlrUytMcFhWbmI3ZWx2TWZBVVFQamw1U3pPZE9vMU1HWFRqc0tETkhyUkI2b0d0V2VrMHQ0Y0MKY3ZYU3lGSkVybGFtMjEvNDBsUVJuU0w3NmpjWFdxTC81Y1hPS3hiZWU4NjU0aFBubDkwekxBbUNOQzUwaUhGbgo4Nmp3ZUJPWDZ2ZFhmVWdkMXE1SFJSZjF1U2VLeHVYYjhFbWRzNlE2WDZRNAotLS0tLUVORCBDRVJUSUZJQ0FURS0tLS0tCg==
