@@ -32,7 +32,8 @@ REALM= args.keycloak_realm
 IDP_ISSUER_URL=f"https://app.run.ai/auth/realms/{REALM}"
 REDIRECT_URI=f"{CTRL_PLANE_URL}/oauth-code"
 INPUT_YAML=args.input_yaml
-OUTPUT_YAML=f"{INPUT_YAML.split(".yaml")[0]}_EIAC_modified.yaml"
+NAME_WITHOUT_Y=INPUT_YAML.split(".yaml")[0]
+OUTPUT_YAML=f"{NAME_WITHOUT_Y}_EIAC_modified.yaml"
 
 print(f"input kubeconfig file: {INPUT_YAML}")
 print(f"writing modified file to: {OUTPUT_YAML}")

@@ -1,0 +1,77 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: validate-pvc-size
+  namespace: webhooks
+spec:
+  ports:
+  - name: webhook
+    port: 8443
+    targetPort: 8443
+  selector:
+    app: pvc-validator
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: pvc-validator
+  namespace: webhooks
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: pvc-validator
+  template:
+    metadata:
+      labels:
+        app: pvc-validator
+    spec:
+      containers:
+      - name: webhook
+        image: python:3.9-slim
+        ports:
+        - containerPort: 8443
+        command: ["sh", "-c"]
+        args:
+          - |
+            pip install flask &&
+            python /app/server.py
+        volumeMounts:
+        - name: webhook-config
+          mountPath: /app
+        - name: webhook-tls
+          mountPath: "/app/certs"
+          readOnly: true
+      volumes:
+      - name: webhook-config
+        configMap:
+          name: webhook-server
+      - name: webhook-tls
+        secret:
+          secretName: webhook-tls
+          items:
+            - key: tls.crt
+              path: webhook.crt
+            - key: tls.key
+              path: webhook.key
+---
+apiVersion: admissionregistration.k8s.io/v1
+kind: ValidatingWebhookConfiguration
+metadata:
+  name: validate-pvc-size
+webhooks:
+  - name: pvc-size-validator.itay.testing.com
+    clientConfig:
+      service:
+        name: pvc-validator
+        namespace: webhooks
+        path: /validate-pvc
+      caBundle: LS0tLS1CRUdJTiBDRVJUSUZJQ0FURS0tLS0tCk1JSURPRENDQWlDZ0F3SUJBZ0lVQ0MvRTZON0xpa0x0a2xBMzArQ2pmN3RtV0pRd0RRWUpLb1pJaHZjTkFRRUwKQlFBd0pURWpNQ0VHQTFVRUF3d2FjSFpqTFhaaGJHbGtZWFJ2Y2k1M1pXSm9iMjlyY3k1emRtTXdIaGNOTWpVdwpNVEV6TVRBek5URXdXaGNOTWpZd01URXpNVEF6TlRFd1dqQWxNU013SVFZRFZRUUREQnB3ZG1NdGRtRnNhV1JoCmRHOXlMbmRsWW1odmIydHpMbk4yWXpDQ0FTSXdEUVlKS29aSWh2Y05BUUVCQlFBRGdnRVBBRENDQVFvQ2dnRUIKQUptajlpbldjaFdRZExYSXl5ci9OekpFclAxZ2MwRWhVMFdDeVpKUEp4Y0FSWFY0Z05UTlR1M3BybnVydkl0Ygo0TGF2YlJlMUxOL1FTSFhnTzg3Qk5UU2JocG5QanFJbzdzOTRIbWh1TklHSlZGUklzUERqNVJ5bGJ3amtNbExyCjQ0eWxleGI4VGF0OFZlY2tmWVNIaWNpWjlLTkRGS2lxUHdSclFpVzkvNDRKVVprKzVwNGZQWUJVL3VBNURUL04KRnQzMUovWUQrS1Rwc2ZBNmVURHFiZ0ZvQmRZNnRDMmZpVXJUVW5ZRERJRjQzWHU1c3A0NGlnbnpxSUlBZWxBbgpzcTloV0ZySnVKYmk0Z3BLL1VzM1F1QVZocXBSRWJUU1dnWXRXNWpnRUp3YjR6MmpUdkpzcmY0RlNRS1QvMlFDCmtCUXJxbXJ3VnQ3YnVSbXFnUDkyc0tFQ0F3RUFBYU5nTUY0d0NRWURWUjBUQkFJd0FEQUxCZ05WSFE4RUJBTUMKQmVBd0pRWURWUjBSQkI0d0hJSWFjSFpqTFhaaGJHbGtZWFJ2Y2k1M1pXSm9iMjlyY3k1emRtTXdIUVlEVlIwTwpCQllFRkdwdHVBcDlZM3FRbFppT1YvaVNOQ1BWSDBtTU1BMEdDU3FHU0liM0RRRUJDd1VBQTRJQkFRQmtxNnd3CkZHWVdpd2NWMDFSVHJqN0d6Sk16QzNoNFpWSmR3TW9BSFZLZ3AvaGIzd3ZWWjF2TFlxclJWRU44WHFFTUgvWFgKZms1cjdhVysvcFJXTlJNSU1Obm50cXdrV24wbnhOSGVKS0doVTlpZEYvQlp0Yk5lbUdKVzNSZEN0Q0M1SHQxNwp2Nkl0dndncFR2YkVqUWIxK2pQNS9DM1ZNd2hpNXNsNFJTNy9KMVowU2l1UEkyaXlPSC9QTU9FVk5Vem5heHJzClR5Ukx3bkpFYkRTbzhHMHRHWGZJM1NPMUdpL3hldDJxWFBlWFZNc1N1OXF5R1RlOW5zKzNKTkE2a084U2ZkSmcKTnBDSEtWb2hSNmVBbzErbTFjYkgrY3hEd1d5bHZWdWtRZ0xma2VNcC8vQlVua1FWUCtEb1FsU3lmMHFweVFhcwpmY21HNlUyandvb3pIcWxzCi0tLS0tRU5EIENFUlRJRklDQVRFLS0tLS0K
+    rules:
+      - apiGroups: [""] # Core API group
+        apiVersions: ["v1"]
+        operations: ["CREATE"]
+        resources: ["persistentvolumeclaims"]
+    failurePolicy: Fail # Reject PVC creation if the webhook server is unreachable
+    sideEffects: None
+    admissionReviewVersions: ["v1"]
