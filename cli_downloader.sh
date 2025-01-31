@@ -8,7 +8,6 @@ fi
 echo "Downloading '$DIST' binaries"
 
 ### runai-adm CLI ###
-
 if kubectl get ns runai-backend > /dev/null 2>&1; then
     RUNAI_CTRL_PLANE_URL=$(kubectl -n runai-backend get ingress runai-backend-ingress -o jsonpath='{.spec.rules[0].host}')
     echo "Run:AI control plane URL: $RUNAI_CTRL_PLANE_URL"
@@ -21,15 +20,17 @@ if kubectl get ns runai-backend > /dev/null 2>&1; then
     echo "alias ra=$ADMIN_CLI_BINARY_PATH"
 else
     echo "Namespace 'runai-backend' does not exist."
+    RUNAI_CTRL_PLANE_URL=""
 fi
 
-
 ### runai CLI ###
-
 if kubectl get ns runai > /dev/null 2>&1; then
-    RUNAI_CLUSTER_URL=$(kubectl -n runai get ingress researcher-service-ingress -o jsonpath='{.spec.rules[0].host}')
-    if [ -z "$RUNAI_CLUSTER_URL" ]; then
+    echo "Namespace 'runai' found!"
+    if [ -z "$RUNAI_CTRL_PLANE_URL" ]; then
+        RUNAI_CLUSTER_URL=$(kubectl -n runai get ingress researcher-service-ingress -o jsonpath='{.spec.rules[0].host}')
+    else
         RUNAI_CLUSTER_URL=$RUNAI_CTRL_PLANE_URL
+    fi
     echo "Run:AI cluster URL: $RUNAI_CLUSTER_URL"
     RUNAI_CLUSTER_VERSION=$(kubectl -n runai get deploy -o wide | tail -n 1 | awk '{ print $7 }' | awk -F: '{print $2}')
     echo "Run:AI cluster version: $RUNAI_CLUSTER_VERSION"
@@ -42,4 +43,3 @@ if kubectl get ns runai > /dev/null 2>&1; then
 else
     echo "Namespace 'runai' does not exist."
 fi
-

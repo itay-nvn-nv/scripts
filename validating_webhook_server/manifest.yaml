@@ -1,30 +1,30 @@
 apiVersion: v1
 kind: Service
 metadata:
-  name: validate-pvc-size
+  name: pvc-size-validator
   namespace: webhooks
 spec:
   ports:
   - name: webhook
-    port: 8443
+    port: 443
     targetPort: 8443
   selector:
-    app: pvc-validator
+    app: pvc-size-validator
 ---
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: pvc-validator
+  name: pvc-size-validator
   namespace: webhooks
 spec:
   replicas: 1
   selector:
     matchLabels:
-      app: pvc-validator
+      app: pvc-size-validator
   template:
     metadata:
       labels:
-        app: pvc-validator
+        app: pvc-size-validator
     spec:
       containers:
       - name: webhook
@@ -58,15 +58,16 @@ spec:
 apiVersion: admissionregistration.k8s.io/v1
 kind: ValidatingWebhookConfiguration
 metadata:
-  name: validate-pvc-size
+  name: pvc-size-validator
 webhooks:
-  - name: pvc-size-validator.itay.testing.com
+  - name: pvc-size-validator.itay.lolz
     clientConfig:
       service:
-        name: pvc-validator
+        name: pvc-size-validator
         namespace: webhooks
-        path: /validate-pvc
-      caBundle: LS0tLS1CRUdJTiBDRVJUSUZJQ0FURS0tLS0tCk1JSURPRENDQWlDZ0F3SUJBZ0lVQ0MvRTZON0xpa0x0a2xBMzArQ2pmN3RtV0pRd0RRWUpLb1pJaHZjTkFRRUwKQlFBd0pURWpNQ0VHQTFVRUF3d2FjSFpqTFhaaGJHbGtZWFJ2Y2k1M1pXSm9iMjlyY3k1emRtTXdIaGNOTWpVdwpNVEV6TVRBek5URXdXaGNOTWpZd01URXpNVEF6TlRFd1dqQWxNU013SVFZRFZRUUREQnB3ZG1NdGRtRnNhV1JoCmRHOXlMbmRsWW1odmIydHpMbk4yWXpDQ0FTSXdEUVlKS29aSWh2Y05BUUVCQlFBRGdnRVBBRENDQVFvQ2dnRUIKQUptajlpbldjaFdRZExYSXl5ci9OekpFclAxZ2MwRWhVMFdDeVpKUEp4Y0FSWFY0Z05UTlR1M3BybnVydkl0Ygo0TGF2YlJlMUxOL1FTSFhnTzg3Qk5UU2JocG5QanFJbzdzOTRIbWh1TklHSlZGUklzUERqNVJ5bGJ3amtNbExyCjQ0eWxleGI4VGF0OFZlY2tmWVNIaWNpWjlLTkRGS2lxUHdSclFpVzkvNDRKVVprKzVwNGZQWUJVL3VBNURUL04KRnQzMUovWUQrS1Rwc2ZBNmVURHFiZ0ZvQmRZNnRDMmZpVXJUVW5ZRERJRjQzWHU1c3A0NGlnbnpxSUlBZWxBbgpzcTloV0ZySnVKYmk0Z3BLL1VzM1F1QVZocXBSRWJUU1dnWXRXNWpnRUp3YjR6MmpUdkpzcmY0RlNRS1QvMlFDCmtCUXJxbXJ3VnQ3YnVSbXFnUDkyc0tFQ0F3RUFBYU5nTUY0d0NRWURWUjBUQkFJd0FEQUxCZ05WSFE4RUJBTUMKQmVBd0pRWURWUjBSQkI0d0hJSWFjSFpqTFhaaGJHbGtZWFJ2Y2k1M1pXSm9iMjlyY3k1emRtTXdIUVlEVlIwTwpCQllFRkdwdHVBcDlZM3FRbFppT1YvaVNOQ1BWSDBtTU1BMEdDU3FHU0liM0RRRUJDd1VBQTRJQkFRQmtxNnd3CkZHWVdpd2NWMDFSVHJqN0d6Sk16QzNoNFpWSmR3TW9BSFZLZ3AvaGIzd3ZWWjF2TFlxclJWRU44WHFFTUgvWFgKZms1cjdhVysvcFJXTlJNSU1Obm50cXdrV24wbnhOSGVKS0doVTlpZEYvQlp0Yk5lbUdKVzNSZEN0Q0M1SHQxNwp2Nkl0dndncFR2YkVqUWIxK2pQNS9DM1ZNd2hpNXNsNFJTNy9KMVowU2l1UEkyaXlPSC9QTU9FVk5Vem5heHJzClR5Ukx3bkpFYkRTbzhHMHRHWGZJM1NPMUdpL3hldDJxWFBlWFZNc1N1OXF5R1RlOW5zKzNKTkE2a084U2ZkSmcKTnBDSEtWb2hSNmVBbzErbTFjYkgrY3hEd1d5bHZWdWtRZ0xma2VNcC8vQlVua1FWUCtEb1FsU3lmMHFweVFhcwpmY21HNlUyandvb3pIcWxzCi0tLS0tRU5EIENFUlRJRklDQVRFLS0tLS0K
+        path: /validate
+        port: 443
+      caBundle: LS0tLS1CRUdJTiBDRVJUSUZJQ0FURS0tLS0tCk1JSURSekNDQWkrZ0F3SUJBZ0lVVjlqNkJlaVZSR0RQSVN4VUgwK2s0b0lZS2djd0RRWUpLb1pJaHZjTkFRRUwKQlFBd0tqRW9NQ1lHQTFVRUF3d2ZjSFpqTFhOcGVtVXRkbUZzYVdSaGRHOXlMbmRsWW1odmIydHpMbk4yWXpBZQpGdzB5TlRBeE16RXhOREkwTkRoYUZ3MHlOakF4TXpFeE5ESTBORGhhTUNveEtEQW1CZ05WQkFNTUgzQjJZeTF6CmFYcGxMWFpoYkdsa1lYUnZjaTUzWldKb2IyOXJjeTV6ZG1Nd2dnRWlNQTBHQ1NxR1NJYjNEUUVCQVFVQUE0SUIKRHdBd2dnRUtBb0lCQVFDLzk1dmpUTHpFS2c4T1FSajA0RGZwa2VBQk9PUWltWi9BQlhvRzJRTk1sT2pqWlg4dAp0N1NVa2kvUUNwRkZGQ1k5Q0N5WDZIOWo3azA3SDl0T3BoSkRoUXZmTnk2YlhLcHJVRzRIYWpMWjVFU0dNd2VWCmo0R2pPWS9lZUlaNHhpSWJaMjlLUDNVNldUandvNy94bjhpRy9TSzJDRm5UTm5TaEVKZGFyWXYxMm0weUNwOVEKNGtZRmpXbDlvbTJ3YTM0a2ZCRHVhb1dkdE5BZTdPS25VblRDcTg2c0VvRzhWU0Q1WUdCTGxtbWx1YmpHdlN5ZgpCam1zTFZsMVBlenljWUlIcG5yL3BMaTJrUHl1VmdtaE42RytwNlhPOW1IdkcxMUZRa3JETENMMXYwaEF4R1hyCnNSWklmR0tRalBVVURyeUlhTHl2L1BJN29tZEdPclJ0bStxRkFnTUJBQUdqWlRCak1Ba0dBMVVkRXdRQ01BQXcKQ3dZRFZSMFBCQVFEQWdYZ01Db0dBMVVkRVFRak1DR0NIM0IyWXkxemFYcGxMWFpoYkdsa1lYUnZjaTUzWldKbwpiMjlyY3k1emRtTXdIUVlEVlIwT0JCWUVGSlJGM3N3dTVuWTZxYnRiWnlyM3AzUldVaG9CTUEwR0NTcUdTSWIzCkRRRUJDd1VBQTRJQkFRQUlxcHhoRThIa29aeVVZZ2ZQTzByWW1kTy9EaFNScXZSTVUybEdTenQ3Q3U1eGIwSEoKbEk0TVp0eGt3MmFic3VQNit6S0ZZYmNwTy9XeHowcnY4Q0VlbmdnbVM0RnBKY2VzakxtcWFXSit0TFg4ejlyMAozMURsV0o0aXpQaU15Ym4rQTU4aXFMdWlEUlNpTDdrWUI4WEdidm1yQ21RdE9mL05tRGtaRDhLcmRMdWNJcXhMClVjdjJTdFhQSFY1NE9pczF2S1hSTXNWKzZJS3YrK28vbUVZU0pZK2poUmlRZ3loS25UTlhXUmhNQ25tOEZjejYKMHZBS1ZMZVpZcTAxeVV6aVFwZjFUTmtwNVl0UjFWakYzYzVWYjNtOW1LZUp4dnRCVVFiekNsZjBXYmNkRUkwSApySTM5dUgyZzJyK1dmWFdaTDhvTGpGbEswekMrdGVSbTYxQkwKLS0tLS1FTkQgQ0VSVElGSUNBVEUtLS0tLQo=
     rules:
       - apiGroups: [""] # Core API group
         apiVersions: ["v1"]

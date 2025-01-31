@@ -21,7 +21,6 @@ kubectl -n webhooks create configmap webhook-server --from-file=server.py=server
 create base64 encoded string for the webhook.crt file, then place it in `webhooks[0].clientConfig.caBundle` within `MutatingWebhookConfiguration` spec in `manifests.yaml` file.
 its crucial that the encoded string will be a single line.
 ```bash
-base64 -w 0 webhook.crt
 cat webhook.crt | base64 -w 0
 ```
 
@@ -37,7 +36,6 @@ apiVersion: v1
 kind: PersistentVolumeClaim
 metadata:
   name: example-pvc
-  namespace: testing
 spec:
   accessModes:
     - ReadWriteOnce
