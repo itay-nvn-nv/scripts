@@ -1,37 +1,34 @@
 #!/bin/bash
+echo "Policy exporter script started..."
 
-# CRD API groups to check
+timestamp=$(date +%Y%m%d_%H%M%S)
+folder="runai_exported_policies_$timestamp"
+mkdir $folder
+cd $folder
+echo "Policies output path: $(pwd)"
+
 CRDS=("distributedpolicies.run.ai" "inferencepolicies.run.ai" "interactivepolicies.run.ai" "trainingpolicies.run.ai")
 
-# Loop through each CRD API group
 for CRD in "${CRDS[@]}"; do
-  # Extract the CRD name from the full API group (e.g., distributedpolicies from distributedpolicies.run.ai)
   CRD_NAME=$(echo "$CRD" | cut -d '.' -f 1)
 
-  # Get all namespaces in the cluster
   NAMESPACES=$(kubectl get namespaces -o jsonpath='{.items[*].metadata.name}')
 
-  # Loop through each namespace
   for NAMESPACE in $NAMESPACES; do
-    # Get all resources of the current CRD in the current namespace
     RESOURCES=$(kubectl get "$CRD" -n "$NAMESPACE" -o jsonpath='{.items[*].metadata.name}')
 
-    # Check if any resources were found
     if [ -n "$RESOURCES" ]; then
-      # Loop through each resource
       for RESOURCE in $RESOURCES; do
-        # Create the filename
-        FILENAME="${NAMESPACE}_${RESOURCE}_${CRD_NAME}.yaml"
+        FILENAME="${CRD_NAME}_${NAMESPACE}_${RESOURCE}.yaml"
 
-        # Get the resource as YAML and save it to the file
         kubectl get "$CRD" "$RESOURCE" -n "$NAMESPACE" -o yaml > "$FILENAME"
 
-        echo "Saved $CRD resource '$RESOURCE' from namespace '$NAMESPACE' to file: $FILENAME"
+        echo "Saved $CRD_NAME '$RESOURCE' from namespace '$NAMESPACE' to file: $FILENAME"
       done
     else
-      echo "No $CRD resources found in namespace '$NAMESPACE'."
+      echo "No $CRD_NAME found in namespace '$NAMESPACE'."
     fi
   done
 done
 
-echo "Script completed."
+echo "Policy exporter script completed."
