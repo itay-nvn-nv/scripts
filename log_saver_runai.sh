@@ -10,10 +10,9 @@ for NAMESPACE in "${NAMESPACES[@]}"; do
     continue
   fi
 
-  echo "Namespace '$NAMESPACE' exists. Listing pods:"
-  kubectl get pods -n "$NAMESPACE"
+  echo "Namespace '$NAMESPACE' exists. Extracting logs:"
   LOG_DIR="./$NAMESPACE-logs"
-  LOG_ARCHIVE_NAME="$NAMESPACE-logs.tar"
+  LOG_ARCHIVE_NAME="$NAMESPACE-logs.tar.gz"
   mkdir $LOG_DIR
   PODS=$(kubectl get pods -n $NAMESPACE -o jsonpath='{.items[*].metadata.name}')
 
@@ -28,7 +27,7 @@ for NAMESPACE in "${NAMESPACES[@]}"; do
   done
 
   du -hs $LOG_DIR
-  tar cvf $LOG_ARCHIVE_NAME $LOG_DIR
+  tar cvzf $LOG_ARCHIVE_NAME $LOG_DIR
   ls -lah $LOG_ARCHIVE_NAME
   rm -rf $LOG_DIR
   echo "Logs archived to $LOG_ARCHIVE_NAME"
