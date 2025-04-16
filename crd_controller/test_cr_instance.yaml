@@ -1,0 +1,8 @@
+apiVersion: good.night/v1  # <group>/<version>
+kind: Dream              # MUST match the kind in the CRD
+metadata:
+  name: balagan
+  namespace: runai-test
+spec:
+  image: nginx:1.23.0      # Override the default image
+  schedulerName: runai-scheduler

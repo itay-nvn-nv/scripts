@@ -1,0 +1,31 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: dream-controller
+  namespace: dream
+spec:
+  selector:
+    matchLabels:
+      app: dream-controller
+  replicas: 1
+  template:
+    metadata:
+      labels:
+        app: dream-controller
+    spec:
+      serviceAccountName: dream-controller-sa # Use the service account created
+      containers:
+      - name: controller
+        image: python:3.9-slim-buster  # Or a suitable base image
+        command: ["/bin/bash", "-c"]
+        args:
+        - |
+          pip install kopf kubernetes  # Install dependencies on the fly
+          python /app/controller.py     # Run the controller script
+        volumeMounts:
+        - name: controller-script
+          mountPath: /app
+      volumes:
+      - name: controller-script
+        configMap:
+          name: dream-controller-script

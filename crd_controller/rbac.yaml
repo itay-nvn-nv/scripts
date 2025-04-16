@@ -1,0 +1,39 @@
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: dream-controller-sa
+  namespace: dream
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: dream-controller-role
+rules:
+- apiGroups: ["example.com"]
+  resources: ["myresources"]
+  verbs: ["get", "list", "watch", "create", "update", "patch", "delete"]
+- apiGroups: ["apps"]
+  resources: ["deployments"]
+  verbs: ["get", "list", "watch", "create", "update", "patch", "delete"]
+- apiGroups: [""] # Core API Group
+  resources: ["namespaces"]
+  verbs: ["get", "list", "watch"] # To watch all namespaces
+- apiGroups: ["apiextensions.k8s.io"]
+  resources: ["customresourcedefinitions"]
+  verbs: ["get", "list", "watch"]
+- apiGroups: ["good.night"]  # Change to the correct API group
+  resources: ["dreams"]     # Change to the correct resource name
+  verbs: ["get", "list", "watch", "create", "update", "patch", "delete"]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: dream-controller-rolebinding
+subjects:
+- kind: ServiceAccount
+  name: dream-controller-sa
+  namespace: dream
+roleRef:
+  kind: ClusterRole
+  name: dream-controller-role
+  apiGroup: rbac.authorization.k8s.io

@@ -1,0 +1,26 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  labels:
+    app: clean
+  name: clean-deployment
+  namespace: runai-test
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: clean
+  template:
+    metadata:
+      labels:
+        app: clean
+    spec:
+      containers:
+      - image: nginx:1.23.0
+        imagePullPolicy: IfNotPresent
+        name: nginx
+        ports:
+        - containerPort: 80
+          protocol: TCP
+      restartPolicy: Always
+      schedulerName: runai-scheduler

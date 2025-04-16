@@ -1,0 +1,70 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: dream-controller-script
+  namespace: dream
+data:
+  controller.py: |
+    #!/usr/bin/env python3
+    import kopf
+    import kubernetes
+    import yaml
+    import os
+
+    print("<== DreamController starting! ==>")
+    @kopf.on.create('good.night', 'v1', 'dreams')  # Watch all namespaces (no namespace argument)
+    def create_fn(body, spec, logger, **kwargs):
+        name = body['metadata']['name']
+        namespace = body['metadata']['namespace']
+        image = spec.get('image', 'nginx:latest')  # Use default if not specified
+
+        scheduler_name = spec.get('schedulerName')  # Get schedulerName from CR
+        cr_namespace = spec.get('namespace') #get namespace
+        pod_spec = {}
+        if scheduler_name:
+            pod_spec['schedulerName'] = scheduler_name  # Set schedulerName in Deployment
+        # Add namespace to the deployment
+        if cr_namespace:
+            namespace = cr_namespace
+
+        deployment = {
+            'apiVersion': 'apps/v1',
+            'kind': 'Deployment',
+            'metadata': {'name': f'{name}-deployment', 'labels': {'app': name}},
+            'spec': {
+                'selector': {'matchLabels': {'app': name}},
+                'replicas': 1,
+                'template': {
+                    'metadata': {'labels': {'app': name}},
+                    'spec': {
+                        'containers': [{
+                            'name': 'nginx',
+                            'image': image,
+                            'ports': [{'containerPort': 80}],
+                        }],
+                        **pod_spec  # Add the pod_spec dictionary here
+                    }
+                }
+            }
+        }
+
+        # Set the CR as the owner of the Deployment
+        kopf.adopt(deployment, body)
+
+        # Create the Deployment
+        api = kubernetes.client.AppsV1Api()
+        obj = api.create_namespaced_deployment(namespace=namespace, body=deployment)
+        logger.info(f"Deployment {obj.metadata.name} created in namespace {namespace}")
+
+        return {'deployment-name': obj.metadata.name}  # Optional: Return something
+
+    # Example to trigger a delete cascade when the CR is deleted.
+    @kopf.on.delete('good.night', 'v1', 'dreams')  # Watch all namespaces (no namespace argument)
+    def delete_fn(body, logger, **kwargs):
+        name = body['metadata']['name']
+        namespace = body['metadata']['namespace']
+        logger.info(f"CR {name} is being deleted in namespace {namespace}.  Deployments should be garbage collected")
+
+    # Add this line to start the kopf operator loop
+    if __name__ == '__main__':
+        kopf.run()  # or kopf.operator()
