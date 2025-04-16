@@ -3,7 +3,7 @@ kind: Deployment
 metadata:
   labels:
     app: clean
-  name: clean-deployment
+  name: good
   namespace: runai-test
 spec:
   replicas: 1

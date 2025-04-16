@@ -7,6 +7,7 @@ kubectl create ns dream
 ```
 kubectl apply -f crd.yaml
 kubectl apply -f deployment.yaml
+kubectl apply -f configmap.yaml
 kubectl apply -f rbac.yaml
 ```
 
