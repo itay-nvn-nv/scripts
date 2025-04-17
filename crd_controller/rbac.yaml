@@ -9,9 +9,6 @@ kind: ClusterRole
 metadata:
   name: dream-controller-role
 rules:
-- apiGroups: ["example.com"]
-  resources: ["myresources"]
-  verbs: ["get", "list", "watch", "create", "update", "patch", "delete"]
 - apiGroups: ["apps"]
   resources: ["deployments"]
   verbs: ["get", "list", "watch", "create", "update", "patch", "delete"]
@@ -24,6 +21,9 @@ rules:
 - apiGroups: ["good.night"]  # Change to the correct API group
   resources: ["dreams"]     # Change to the correct resource name
   verbs: ["get", "list", "watch", "create", "update", "patch", "delete"]
+- apiGroups: [""] # "" specifies the core API group
+  resources: ["events"]
+  verbs: ["create"]
 ---
 apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRoleBinding

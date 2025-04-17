@@ -11,7 +11,6 @@ data:
     import yaml
     import os
 
-    print("<== DreamController starting! ==>")
     @kopf.on.create('good.night', 'v1', 'dreams')  # Watch all namespaces (no namespace argument)
     def create_fn(body, spec, logger, **kwargs):
         name = body['metadata']['name']
@@ -67,4 +66,5 @@ data:
 
     # Add this line to start the kopf operator loop
     if __name__ == '__main__':
-        kopf.run()  # or kopf.operator()
+        print("<== DreamController starting! ==>")
+        kopf.run(clusterwide=True)  # or kopf.operator()
