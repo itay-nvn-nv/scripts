@@ -1,10 +1,15 @@
 #!/usr/bin/env python3
-
+# pip install requests, pygments
+# python3 prometheus_query.py --url http://prometheus-operator.monitoring.svc.cluster.local:9090 --query 'up' --export
 import requests
 import json
 from typing import Dict, Any, Optional
 from datetime import datetime, timedelta
 import urllib.parse
+import argparse
+from pygments import highlight
+from pygments.lexers import JsonLexer
+from pygments.formatters import TerminalFormatter
 
 class PrometheusQuery:
     def __init__(self, base_url: str):
@@ -59,10 +64,8 @@ class PrometheusQuery:
             default_params.update(params)
             
         try:
-            # URL encode the query to handle special characters
-            encoded_params = {k: urllib.parse.quote(str(v)) if k == 'query' else v 
-                            for k, v in default_params.items()}
-            response = requests.get(endpoint, params=encoded_params)
+            # Let requests handle the URL encoding
+            response = requests.get(endpoint, params=default_params)
             response.raise_for_status()
             return response.json()
         except requests.exceptions.RequestException as e:
@@ -95,53 +98,70 @@ class PrometheusQuery:
             default_params.update(params)
             
         try:
-            # URL encode the query to handle special characters
-            encoded_params = {k: urllib.parse.quote(str(v)) if k == 'query' else v 
-                            for k, v in default_params.items()}
-            response = requests.get(endpoint, params=encoded_params)
+            # Let requests handle the URL encoding
+            response = requests.get(endpoint, params=default_params)
             response.raise_for_status()
             return response.json()
         except requests.exceptions.RequestException as e:
             raise Exception(f"Failed to execute range query: {str(e)}")
 
+def parse_args():
+    parser = argparse.ArgumentParser(description='Query Prometheus API')
+    parser.add_argument('--query', type=str, required=True, help='PromQL query to execute')
+    parser.add_argument('--url', type=str, default='http://localhost:9090', help='Prometheus server URL')
+    parser.add_argument('--range', action='store_true', help='Execute a range query instead of an instant query')
+    parser.add_argument('--start', type=str, help='Start time for range query (ISO format, e.g., 2023-01-01T00:00:00Z)')
+    parser.add_argument('--end', type=str, help='End time for range query (ISO format, e.g., 2023-01-01T01:00:00Z)')
+    parser.add_argument('--step', type=str, default='1m', help='Step width for range query (e.g., 1m, 5m, 1h)')
+    parser.add_argument('--no-color', action='store_true', help='Disable syntax highlighting')
+    parser.add_argument('--export', action='store_true', help='Export the query result to a JSON file in /tmp folder')
+    return parser.parse_args()
+
 def main():
-    # Example usage
-    prom = PrometheusQuery('http://localhost:9090')
+    args = parse_args()
+    prom = PrometheusQuery(args.url)
     
-    # Example with the simple query
     try:
-        simple_query = 'runai_gpu_memory_used_mebibytes_per_workload{workload_name="shared-inpaint-creative-inference"}'
-        print(f"\nExecuting simple query: {simple_query}")
-        result = prom.query(simple_query)
-        print("Simple Query Result:")
-        print(json.dumps(result, indent=2))
-    except Exception as e:
-        print(f"Error executing simple query: {e}")
-    
-    # Example with the complex query
-    try:
-        complex_query = '''sum by (workload_name, workload_id, pod_group_uuid, job_name, job_uuid , pod_namespace, project) 
-        (label_replace(label_replace(sum(rate(container_cpu_usage_seconds_total{ container!=""}[2m])) by (pod, namespace),
-        "pod_name" , "bla", "pod", "(.*)"), "pod_namespace" , "bla", "namespace", "(.*)") 
-        * on(pod_name, pod_namespace) group_left(workload_name, pod_group_uuid, job_name, job_uuid, workload_id, project) 
-        (runai_pod_phase_with_info{phase="Running"} ==1))'''
+        if args.range:
+            # Parse start and end times
+            start_time = datetime.fromisoformat(args.start.replace('Z', '+00:00')) if args.start else datetime.now() - timedelta(hours=1)
+            end_time = datetime.fromisoformat(args.end.replace('Z', '+00:00')) if args.end else datetime.now()
+            
+            result = prom.query_range(args.query, start_time, end_time, step=args.step)
+            print("\nRange Query Result:")
+        else:
+            result = prom.query(args.query)
+            print("\nInstant Query Result:")
         
-        print(f"\nExecuting complex query: {complex_query}")
-        result = prom.query(complex_query)
-        print("Complex Query Result:")
-        print(json.dumps(result, indent=2))
+        # Display query information
+        print("\nQuery Information:")
+        print(f"Query: {args.query}")
+        if args.range:
+            print(f"Start Time: {start_time.isoformat()}")
+            print(f"End Time: {end_time.isoformat()}")
+            print(f"Step: {args.step}")
+        
+        # Display result with syntax highlighting
+        print("\nResult:")
+        json_str = json.dumps(result, indent=2)
+        if not args.no_color:
+            highlighted_json = highlight(json_str, JsonLexer(), TerminalFormatter())
+            print(highlighted_json)
+        else:
+            print(json_str)
+        
+        # Export the result to a JSON file if requested
+        if args.export:
+            # Generate filename with HH-MM-SS_DD-MM-YY.json format
+            timestamp = datetime.now().strftime("%H-%M-%S_%d-%m-%y")
+            filename = f"/tmp/prometheus_query_{timestamp}.json"
+            
+            with open(filename, 'w') as f:
+                json.dump(result, f, indent=2)
+            
+            print(f"\nQuery result exported to: {filename}")
     except Exception as e:
-        print(f"Error executing complex query: {e}")
-    
-    # Example range query with the complex metric
-    try:
-        end_time = datetime.now()
-        start_time = end_time - timedelta(hours=1)
-        result = prom.query_range(complex_query, start_time, end_time, step='5m')
-        print("\nComplex Query Range Result:")
-        print(json.dumps(result, indent=2))
-    except Exception as e:
-        print(f"Error executing complex range query: {e}")
+        print(f"Error executing query: {e}")
 
 if __name__ == "__main__":
     main() 
