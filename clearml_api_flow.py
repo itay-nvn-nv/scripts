@@ -4,6 +4,7 @@ import random
 import base64
 from clearml import Task
 from clearml.backend_api.session import Session
+from clearml.backend_api.config import Config
 
 def setup_clearml_auth():
     webserver_url = os.getenv("WEBSERVER_URL")
@@ -20,25 +21,28 @@ def setup_clearml_auth():
         raise ValueError(f"Invalid WEBSERVER_BASIC_AUTH format: {str(e)}")
     
     # Configure ClearML
-    Session.set_credentials(
-        api_server=webserver_url,
-        web_server=webserver_url,
-        files_server=webserver_url,
-        access_key=access_key,
-        secret_key=secret_key
-    )
+    config = Config()
+    config.api_server = webserver_url
+    config.web_server = webserver_url
+    config.files_server = webserver_url
+    config.access_key = access_key
+    config.secret_key = secret_key
+    
+    # Initialize session with config
+    session = Session(config=config)
     
     # Verify authentication by making a test API call
     try:
         # Try to get the current user info as a verification
-        user_info = Session.get_client().users.get_current_user()
+        user_info = session.get_client().users.get_current_user()
         print(f"Authentication successful! Connected as: {user_info.name}")
+        return session
     except Exception as e:
         raise ValueError(f"Authentication failed: {str(e)}")
 
 def main():
-    # Setup authentication first
-    setup_clearml_auth()
+    # Setup authentication first and get session
+    session = setup_clearml_auth()
     
     # Generate random names if not provided
     project_name = os.getenv("PROJECT_NAME", f"test-v{random.randint(0, 999):03d}")
@@ -62,30 +66,28 @@ def main():
     project_id = os.getenv("PROJECT_ID")
     if not project_id:
         print(f"PROJECT_ID is not set, creating new project: {project_name}")
-        task = Task.create(
-            project_name=project_name,
-            task_name=task_name,
-            task_type="training",
-            repo=os.getenv("TASK_GIT_REPO"),
-            branch=os.getenv("TASK_GIT_BRANCH"),
-            script=os.getenv("TASK_ENTRYPOINT"),
-            docker=os.getenv("TASK_IMAGE"),
-            docker_args="-e CLEARML_AGENT_FORCE_TASK_INIT=1 -e CLEARML_AGENT_FORCE_POETRY",
-            setup_shell_script=os.getenv("TASK_PRERUN_SCRIPT", ""),
+        # Create project first
+        project = session.get_client().projects.create(
+            name=project_name,
+            description="test in progress",
+            system_tags=[]
         )
-    else:
-        print(f"Using existing project ID: {project_id}")
-        task = Task.create(
-            project_id=project_id,
-            task_name=task_name,
-            task_type="training",
-            repo=os.getenv("TASK_GIT_REPO"),
-            branch=os.getenv("TASK_GIT_BRANCH"),
-            script=os.getenv("TASK_ENTRYPOINT"),
-            docker=os.getenv("TASK_IMAGE"),
-            docker_args="-e CLEARML_AGENT_FORCE_TASK_INIT=1 -e CLEARML_AGENT_FORCE_POETRY",
-            setup_shell_script=os.getenv("TASK_PRERUN_SCRIPT", ""),
-        )
+        project_id = project.id
+        print(f"Created project with ID: {project_id}")
+
+    # Create task
+    print(f"Creating task: {task_name}")
+    task = Task.create(
+        project_id=project_id,
+        task_name=task_name,
+        task_type="training",
+        repo=os.getenv("TASK_GIT_REPO"),
+        branch=os.getenv("TASK_GIT_BRANCH"),
+        script=os.getenv("TASK_ENTRYPOINT"),
+        docker=os.getenv("TASK_IMAGE"),
+        docker_args="-e CLEARML_AGENT_FORCE_TASK_INIT=1 -e CLEARML_AGENT_FORCE_POETRY",
+        setup_shell_script=os.getenv("TASK_PRERUN_SCRIPT", ""),
+    )
 
     # Get queue name
     queue_name = os.getenv("QUEUE_NAME")
