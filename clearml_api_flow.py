@@ -27,6 +27,7 @@ def setup_clearml_auth():
     config.files_server = webserver_url
     config.access_key = access_key
     config.secret_key = secret_key
+    config.max_req_size = 100 * 1024 * 1024  # 100MB max request size
     
     # Initialize session with config
     session = Session(config=config)
