@@ -2,7 +2,7 @@
 import os
 import random
 import base64
-from clearml import Task, Queue
+from clearml import Task
 from clearml.backend_api.session import Session
 
 def setup_clearml_auth():
@@ -87,18 +87,10 @@ def main():
             setup_shell_script=os.getenv("TASK_PRERUN_SCRIPT", ""),
         )
 
-    # Get or create queue
+    # Get queue name
     queue_name = os.getenv("QUEUE_NAME")
-    queue_id = os.getenv("QUEUE_ID")
-    
-    if not queue_id:
-        print(f"Checking if queue exists: {queue_name}")
-        queue = Queue.get_queue_by_name(queue_name)
-        if not queue:
-            print(f"Queue does not exist, creating new queue: {queue_name}")
-            queue = Queue.create(queue_name)
-        queue_id = queue.id
-        print(f"QUEUE_ID: {queue_id}")
+    if not queue_name:
+        raise ValueError("QUEUE_NAME environment variable is required")
 
     # Enqueue task
     task.set_system_tags(["k8s"])
