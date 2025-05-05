@@ -89,11 +89,23 @@ echo "TASK_ID: $TASK_ID"
 echo
 
 # 5) enqueue task
-curl -s --location "$WEBSERVER_URL/api/v2.30/tasks.enqueue" \
+ENQUEUE_RESPONSE=$(curl -s --location "$WEBSERVER_URL/api/v2.30/tasks.enqueue" \
 --header "Cookie: clearml-token-k8s=$CLEARML_TOKEN" \
 --header 'Content-Type: application/json' \
 --data "{
     \"queue\": \"$QUEUE_ID\",
     \"task\": \"$TASK_ID\",
     \"verify_watched_queue\": true
-}" | jq
+}")
+
+echo "Enqueue response: $ENQUEUE_RESPONSE"
+
+# 6) verify task status
+TASK_STATUS=$(curl -s --location "$WEBSERVER_URL/api/v2.30/tasks.get_all" \
+--header "Cookie: clearml-token-k8s=$CLEARML_TOKEN" \
+--header 'Content-Type: application/json' \
+--data "{
+    \"id\": [\"$TASK_ID\"]
+}" | jq -r '.data.tasks[0].status')
+
+echo "Task status: $TASK_STATUS"
