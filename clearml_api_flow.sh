@@ -65,6 +65,9 @@ TASK_ID=$(curl -s --location "$WEBSERVER_URL/api/v2.30/tasks.create" \
     \"project\": \"$PROJECT_ID\",
     \"name\": \"$TASK_NAME\",
     \"type\": \"training\",
+    \"execution\": {
+        \"queue\": \"$QUEUE_ID\"
+    },
     \"script\": {
         \"repository\": \"$TASK_GIT_REPO\",
         \"branch\": \"$TASK_GIT_BRANCH\",
