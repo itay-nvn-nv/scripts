@@ -12,6 +12,9 @@
 # TASK_IMAGE=""
 # TASK_PRERUN_SCRIPT=""
 
+PROJECT_NAME="test-999-$(printf %03d $((RANDOM % 1000)))"
+TASK_NAME="random-logger-v-$(printf %03d $((RANDOM % 1000)))"
+
 ### optional env vars:
 # PROJECT_ID="" # (if provided, project and queue creation will be skipped, and only task will be created)
 # QUEUE_ID="" # (if provided, project and queue creation will be skipped, and only task will be created)
