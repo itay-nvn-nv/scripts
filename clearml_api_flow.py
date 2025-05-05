@@ -3,8 +3,7 @@ import os
 import random
 import base64
 from clearml import Task
-from clearml.backend_api.session import Session
-from clearml.backend_api.config import Config
+from clearml.backend_api.session.client import APIClient
 
 def setup_clearml_auth():
     webserver_url = os.getenv("WEBSERVER_URL")
@@ -20,30 +19,26 @@ def setup_clearml_auth():
     except Exception as e:
         raise ValueError(f"Invalid WEBSERVER_BASIC_AUTH format: {str(e)}")
     
-    # Configure ClearML
-    config = Config()
-    config.api_server = webserver_url
-    config.web_server = webserver_url
-    config.files_server = webserver_url
-    config.access_key = access_key
-    config.secret_key = secret_key
-    config.max_req_size = 100 * 1024 * 1024  # 100MB max request size
-    
-    # Initialize session with config
-    session = Session(config=config)
+    # Create API client with credentials
+    client = APIClient(
+        api_server=webserver_url,
+        web_server=webserver_url,
+        files_server=webserver_url,
+        credentials=(access_key, secret_key)
+    )
     
     # Verify authentication by making a test API call
     try:
         # Try to get the current user info as a verification
-        user_info = session.get_client().users.get_current_user()
-        print(f"Authentication successful! Connected as: {user_info.name}")
-        return session
+        user_info = client.users.get_current_user()
+        print(f"Authentication successful! Connected as: {user_info.data.name}")
+        return client
     except Exception as e:
         raise ValueError(f"Authentication failed: {str(e)}")
 
 def main():
-    # Setup authentication first and get session
-    session = setup_clearml_auth()
+    # Setup authentication first and get client
+    client = setup_clearml_auth()
     
     # Generate random names if not provided
     project_name = os.getenv("PROJECT_NAME", f"test-v{random.randint(0, 999):03d}")
@@ -68,12 +63,12 @@ def main():
     if not project_id:
         print(f"PROJECT_ID is not set, creating new project: {project_name}")
         # Create project first
-        project = session.get_client().projects.create(
+        project = client.projects.create(
             name=project_name,
             description="test in progress",
             system_tags=[]
         )
-        project_id = project.id
+        project_id = project.data.id
         print(f"Created project with ID: {project_id}")
 
     # Create task
