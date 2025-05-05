@@ -18,7 +18,6 @@ TASK_NAME="random-logger-v-$(printf %03d $((RANDOM % 1000)))"
 ### optional env vars:
 # PROJECT_ID="" # (if provided, project and queue creation will be skipped, and only task will be created)
 # QUEUE_ID="" # (if provided, project and queue creation will be skipped, and only task will be created)
-# SCRIPT_OPERATION="" # "full" or none will run the entire script, "create-task" will only create task
 
 # 1) login using default user & retrieve token:
 CLEARML_TOKEN=$(curl -s --location --request POST "$WEBSERVER_URL/api/v2.30/auth.login" \
@@ -31,47 +30,32 @@ CLEARML_TOKEN=$(curl -s --location --request POST "$WEBSERVER_URL/api/v2.30/auth
 echo "CLEARML_TOKEN: $CLEARML_TOKEN"
 echo
 
-if [ -z "$SCRIPT_OPERATION" ]; then
-    SCRIPT_OPERATION="full"
-fi
+# 2) create project
+echo "PROJECT_ID is not set, creating new project: $PROJECT_NAME"
+PROJECT_RESPONSE=$(curl -s --location "$WEBSERVER_URL/api/v2.30/projects.create" \
+--header "Cookie: clearml-token-k8s=$CLEARML_TOKEN" \
+--header 'Content-Type: application/json' \
+--data "{\"name\": \"$PROJECT_NAME\",\"description\": \"test in progress\",\"system_tags\": [],\"default_output_destination\": null}")
+PROJECT_ID=$(echo $PROJECT_RESPONSE | jq -r '.data.id')
+echo "api call response: $PROJECT_RESPONSE"
+echo "PROJECT_ID: $PROJECT_ID"
+# 3) check if queue exists and create if needed
+echo "Checking if queue exists: $QUEUE_NAME"
+QUEUE_ID=$(curl -s --location "$WEBSERVER_URL/api/v2.30/queues.get_all" \
+--header "Cookie: clearml-token-k8s=$CLEARML_TOKEN" \
+--header 'Content-Type: application/json' | jq -r ".data.queues[] | select(.name == \"$QUEUE_NAME\") | .id")
 
-echo "SCRIPT_OPERATION is set to '$SCRIPT_OPERATION'"
-
-# check if queue exists
-# if not, create
-# if does, grab id
-
-if [[ "$SCRIPT_OPERATION" == "full" ]]; then
-    # 2) create project
-    echo "PROJECT_ID is not set, creating new project: $PROJECT_NAME"
-    PROJECT_RESPONSE=$(curl -s --location "$WEBSERVER_URL/api/v2.30/projects.create" \
+if [ -z "$QUEUE_ID" ]; then
+    echo "Queue does not exist, creating new queue: $QUEUE_NAME"
+    QUEUE_ID=$(curl -s --location "$WEBSERVER_URL/api/v2.30/queues.create" \
     --header "Cookie: clearml-token-k8s=$CLEARML_TOKEN" \
     --header 'Content-Type: application/json' \
-    --data "{\"name\": \"$PROJECT_NAME\",\"description\": \"test in progress\",\"system_tags\": [],\"default_output_destination\": null}")
-    PROJECT_ID=$(echo $PROJECT_RESPONSE | jq -r '.data.id')
-    echo "api call response: $PROJECT_RESPONSE"
-    echo "PROJECT_ID: $PROJECT_ID"
-    # 3) check if queue exists and create if needed
-    echo "Checking if queue exists: $QUEUE_NAME"
-    QUEUE_ID=$(curl -s --location "$WEBSERVER_URL/api/v2.30/queues.get_all" \
-    --header "Cookie: clearml-token-k8s=$CLEARML_TOKEN" \
-    --header 'Content-Type: application/json' | jq -r ".data.queues[] | select(.name == \"$QUEUE_NAME\") | .id")
-
-    if [ -z "$QUEUE_ID" ]; then
-        echo "Queue does not exist, creating new queue: $QUEUE_NAME"
-        QUEUE_ID=$(curl -s --location "$WEBSERVER_URL/api/v2.30/queues.create" \
-        --header "Cookie: clearml-token-k8s=$CLEARML_TOKEN" \
-        --header 'Content-Type: application/json' \
-        --data "{\"name\": \"$QUEUE_NAME\"}" | jq -r '.data.id')
-    else
-        echo "Queue already exists with ID: $QUEUE_ID"
-    fi
-    echo "QUEUE_ID: $QUEUE_ID"
-    echo
-elif [[ "$SCRIPT_OPERATION" == "create-task" ]]; then
-    echo "QUEUE_ID: $QUEUE_ID"
-    echo "PROJECT_ID: $PROJECT_ID"
+    --data "{\"name\": \"$QUEUE_NAME\"}" | jq -r '.data.id')
+else
+    echo "Queue already exists with ID: $QUEUE_ID"
 fi
+echo "QUEUE_ID: $QUEUE_ID"
+echo
 
 # 4) create task
 TASK_ID=$(curl -s --location "$WEBSERVER_URL/api/v2.30/tasks.create" \
