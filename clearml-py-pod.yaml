@@ -1,0 +1,29 @@
+apiVersion: v1
+kind: Pod
+metadata:
+  name: clearml-api-flow-runner
+  labels:
+    app: clearml-api-flow-runner
+spec:
+  containers:
+    - name: python
+      image: python:3.10-slim
+      command: ["sleep", "infinity"]
+      env:
+        - name: SCRIPT_URL
+          value: "https://raw.githubusercontent.com/itay-nvn-nv/scripts/refs/heads/main/clearml_api_flow.py"
+        - name: WEBSERVER_URL
+          value: "http://clearml-webserver.clearml.svc.cluster.local:8080"
+        - name: WEBSERVER_BASIC_AUTH
+          value: "R0dTOUY0TTZYQjJEWEo1QUZUOUY6Mm9HdWpWRmhQZmFvemhwdXoyR3pRZkE1T3l4bU1zUjNXVkpwc0NSNWhyZ0hGczIwUE8="
+        - name: TASK_GIT_REPO
+          value: "https://github.com/itay-nvn-nv/scripts"
+        - name: TASK_GIT_BRANCH
+          value: "main"
+        - name: TASK_ENTRYPOINT
+          value: "random_logger.py"
+        - name: TASK_IMAGE
+          value: "python:3.10"
+        - name: TASK_PRERUN_SCRIPT
+          value: "pip install clearml clearml-agent"
+  restartPolicy: Never 

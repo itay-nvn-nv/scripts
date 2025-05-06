@@ -1,5 +1,8 @@
 #!/bin/bash
 
+### dependencies:
+# apt update && apt install -y curl vim jq
+
 ### expected env vars:
 # WEBSERVER_URL=""
 # WEBSERVER_BASIC_AUTH="" # base64 encoded string of access_key:secret_key
