@@ -1,11 +1,13 @@
 apt update && apt install -y curl jq
 
-WEBSERVER_URL="http://clearml-webserver.clearml.svc.cluster.local:8080"
-WEBSERVER_BASIC_AUTH="R0dTOUY0TTZYQjJEWEo1QUZUOUY6Mm9HdWpWRmhQZmFvemhwdXoyR3pRZkE1T3l4bU1zUjNXVkpwc0NSNWhyZ0hGczIwUE8="
-
 random_digits=$(printf "%03d" "$((RANDOM % 1000))")
 PROJECT_NAME="test-$MY_POD_NAMESPACE-$random_digits"
 QUEUE_NAME=$MY_POD_NAMESPACE
+
+echo "WEBSERVER_URL: $WEBSERVER_URL"
+echo "WEBSERVER_BASIC_AUTH: $WEBSERVER_BASIC_AUTH"
+echo "PROJECT_NAME: $PROJECT_NAME"
+echo "QUEUE_NAME: $QUEUE_NAME"
 
 CLEARML_TOKEN=$(curl -s --location --request POST "$WEBSERVER_URL/api/v2.30/auth.login" \
 --header "Authorization: Basic $WEBSERVER_BASIC_AUTH" \
