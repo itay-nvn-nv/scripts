@@ -1,3 +1,5 @@
+apt update && apt install -y curl jq
+
 WEBSERVER_URL="http://clearml-webserver.clearml.svc.cluster.local:8080"
 WEBSERVER_BASIC_AUTH="R0dTOUY0TTZYQjJEWEo1QUZUOUY6Mm9HdWpWRmhQZmFvemhwdXoyR3pRZkE1T3l4bU1zUjNXVkpwc0NSNWhyZ0hGczIwUE8="
 
