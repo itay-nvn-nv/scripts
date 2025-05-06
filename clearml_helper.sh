@@ -1,7 +1,8 @@
 WEBSERVER_URL="http://clearml-webserver.clearml.svc.cluster.local:8080"
 WEBSERVER_BASIC_AUTH="R0dTOUY0TTZYQjJEWEo1QUZUOUY6Mm9HdWpWRmhQZmFvemhwdXoyR3pRZkE1T3l4bU1zUjNXVkpwc0NSNWhyZ0hGczIwUE8="
 
-PROJECT_NAME="test-999-$MY_POD_NAMESPACE"
+random_digits=$(printf "%03d" "$((RANDOM % 1000))")
+PROJECT_NAME="test-$MY_POD_NAMESPACE-$random_digits"
 QUEUE_NAME=$MY_POD_NAMESPACE
 
 CLEARML_TOKEN=$(curl -s --location --request POST "$WEBSERVER_URL/api/v2.30/auth.login" \
@@ -14,7 +15,7 @@ CLEARML_TOKEN=$(curl -s --location --request POST "$WEBSERVER_URL/api/v2.30/auth
 echo "CLEARML_TOKEN: $CLEARML_TOKEN"
 echo
 
-# 2) create project
+# 2) create project (always random and unique)
 echo "creating new project: $PROJECT_NAME"
 PROJECT_RESPONSE=$(curl -s --location "$WEBSERVER_URL/api/v2.30/projects.create" \
 --header "Cookie: clearml-token-k8s=$CLEARML_TOKEN" \
@@ -24,11 +25,20 @@ PROJECT_ID=$(echo $PROJECT_RESPONSE | jq -r '.data.id')
 echo "PROJECT_ID: $PROJECT_ID"
 echo
 
-# 3) create queue
-echo "creating new queue: $QUEUE_NAME"
-QUEUE_ID=$(curl -s --location "$WEBSERVER_URL/api/v2.30/queues.create" \
+# 3) check if queue exists and create if needed
+echo "Checking if queue exists: $QUEUE_NAME"
+QUEUE_ID=$(curl -s --location "$WEBSERVER_URL/api/v2.30/queues.get_all" \
 --header "Cookie: clearml-token-k8s=$CLEARML_TOKEN" \
---header 'Content-Type: application/json' \
---data "{\"name\": \"$QUEUE_NAME\"}" | jq -r '.data.id')
+--header 'Content-Type: application/json' | jq -r ".data.queues[] | select(.name == \"$QUEUE_NAME\") | .id")
+
+if [ -z "$QUEUE_ID" ]; then
+    echo "Queue does not exist, creating new queue: $QUEUE_NAME"
+    QUEUE_ID=$(curl -s --location "$WEBSERVER_URL/api/v2.30/queues.create" \
+    --header "Cookie: clearml-token-k8s=$CLEARML_TOKEN" \
+    --header 'Content-Type: application/json' \
+    --data "{\"name\": \"$QUEUE_NAME\"}" | jq -r '.data.id')
+else
+    echo "Queue already exists with ID: $QUEUE_ID"
+fi
 echo "QUEUE_ID: $QUEUE_ID"
 echo
