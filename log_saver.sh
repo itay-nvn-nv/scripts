@@ -9,6 +9,8 @@ NAMESPACE=$1
 LOG_DIR="./$NAMESPACE-logs"
 mkdir $LOG_DIR
 
+echo "saving logs for namespace '$NAMESPACE':"
+
 PODS=$(kubectl get pods -n $NAMESPACE -o jsonpath='{.items[*].metadata.name}')
 
 for POD in $PODS; do
