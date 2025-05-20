@@ -2,9 +2,9 @@
 
 # provide inputs for the following vars:
 # (the token is taken from the CLU config by default, assuming runai CLI v2 is installed and logged in - but can be explicitly set otherwise)
-RUNAI_CTRL_PLANE="https://envinaclick.run.ai"
+RUNAI_CTRL_PLANE=""
 TOKEN=$(cat ~/.runai/authentication.json | jq -r .'accessToken' | base64 -d)
-CLUSTER_NAME="bgu-saas-lab-latest-1747651871"
+CLUSTER_NAME=""
 DESIRED_GPU_QUOTA=0 # integer, not string
 
 # leave the following untouched:
