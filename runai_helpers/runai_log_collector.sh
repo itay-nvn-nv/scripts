@@ -11,9 +11,10 @@ for NAMESPACE in "${NAMESPACES[@]}"; do
   fi
 
   echo "Namespace '$NAMESPACE' exists. Extracting logs:"
-  LOG_DIR="./$NAMESPACE-logs"
   TIMESTAMP=$(date +%d-%m-%Y_%H-%M)
-  LOG_ARCHIVE_NAME="$NAMESPACE-logs-$TIMESTAMP.tar.gz"
+  LOG_NAME="$NAMESPACE-logs-$TIMESTAMP"
+  LOG_DIR="./$LOG_NAME"
+  LOG_ARCHIVE_NAME="$LOG_NAME.tar.gz"
   mkdir $LOG_DIR
   PODS=$(kubectl get pods -n $NAMESPACE -o jsonpath='{.items[*].metadata.name}')
 
