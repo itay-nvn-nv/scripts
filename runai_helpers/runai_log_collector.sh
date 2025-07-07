@@ -40,13 +40,15 @@ for NAMESPACE in "${NAMESPACES[@]}"; do
   # Collect extra info per namespace
   if [ "$NAMESPACE" == "runai" ]; then
     helm ls -A > "$LOG_DIR/helm_charts_list.txt"
-    helm get values runai-cluster -n runai > "$LOG_DIR/runai-cluster-values.yaml" 2>/dev/null
+    helm get values runai-cluster -n runai > "$LOG_DIR/helm-values_runai-cluster.yaml" 2>/dev/null
     kubectl -n runai get cm runai-public -o yaml > "$LOG_DIR/cm_runai-public.yaml" 2>/dev/null
-    kubectl -n runai get pods -o wide > "$LOG_DIR/runai_pod_list.txt"
-    kubectl get nodes -o wide > "$LOG_DIR/node_list.txt"
+    kubectl -n runai get pods -o wide > "$LOG_DIR/pod-list_runai.txt"
+    kubectl get nodes -o wide > "$LOG_DIR/node-list.txt"
+    kubectl -n runai get runaiconfig runai -o yaml > "$LOG_DIR/runaiconfig.yaml"
+    kubectl -n runai get configs.engine.run.ai engine-config -o yaml > "$LOG_DIR/engine-config.yaml"
   elif [ "$NAMESPACE" == "runai-backend" ]; then
-    kubectl -n runai-backend get pods -o wide > "$LOG_DIR/runai_pod_list.txt"
-    helm get values runai-backend -n runai-backend > "$LOG_DIR/runai-backend-values.yaml" 2>/dev/null
+    kubectl -n runai-backend get pods -o wide > "$LOG_DIR/pod-list_runai-backend.txt"
+    helm get values runai-backend -n runai-backend > "$LOG_DIR/helm-values_runai-backend.yaml" 2>/dev/null
   fi
 
   du -hs $LOG_DIR
