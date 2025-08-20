@@ -1,6 +1,6 @@
 # SMTP Testing Server
 
-Kubernetes-native SMTP test server using MailHog. Catches emails without delivering them - perfect for testing your webapp's email functionality.
+k8s-native SMTP test server using MailHog. Catches emails without delivering them - for testing any webapp's email functionality.
 
 ## Quick Start
 
