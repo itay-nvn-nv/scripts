@@ -1,0 +1,20 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: smtp-config
+  namespace: smtp
+  labels:
+    app: mailhog
+    auth-mode: disabled
+data:
+  # SMTP connection details for your webapp (NO AUTHENTICATION)
+  SMTP_HOST: "mailhog.smtp.svc.cluster.local"
+  SMTP_PORT: "1025"
+  SMTP_USERNAME: ""
+  SMTP_PASSWORD: ""
+  SMTP_AUTH: "false"
+  SMTP_TLS: "false"
+  WEB_UI_URL: "http://localhost:8025"
+  
+  # MailHog authentication settings (disabled)
+  MH_AUTH_FILE: ""

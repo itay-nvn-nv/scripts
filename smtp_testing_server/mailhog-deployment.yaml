@@ -1,0 +1,50 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: mailhog
+  namespace: smtp
+  labels:
+    app: mailhog
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: mailhog
+  template:
+    metadata:
+      labels:
+        app: mailhog
+    spec:
+      containers:
+      - name: mailhog
+        image: mailhog/mailhog:v1.0.1
+        ports:
+        - containerPort: 1025
+          name: smtp
+          protocol: TCP
+        - containerPort: 8025
+          name: web
+          protocol: TCP
+        resources:
+          requests:
+            memory: "32Mi"
+            cpu: "10m"
+          limits:
+            memory: "128Mi"
+            cpu: "100m"
+        env:
+        - name: MH_STORAGE
+          value: "memory"
+        - name: MH_HOSTNAME
+          value: "mailhog.smtp.svc.cluster.local"
+        # Authentication settings (configurable)
+        - name: MH_AUTH_FILE
+          valueFrom:
+            configMapKeyRef:
+              name: smtp-config
+              key: MH_AUTH_FILE
+              optional: true
+        envFrom:
+        - secretRef:
+            name: smtp-credentials
+            optional: true
